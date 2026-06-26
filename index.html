@@ -298,6 +298,7 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 /* ====== CONFIG ====== */
 const SHEET_ID="1g6vGbVMAaLKnJI06F-xKVskKcE862EelVC_CKSH7U6c";
 const GIDS={master:"1484820577",design:"392178120",attendance:"1387164875",checkinout:"854609223",users:"76549870"};
+const APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbx3Owv3vO9qq1plv4mJXC8GOw0cxoauqSTKEoNzlxDxLJRqEcAdjYFdKUJjyPfq5b4T/exec"; // deployed Apps Script feed
 var DEV_TAT_START="DEV Accepted timestamp"; // change to "Asssigned Time_Stamp" if you prefer
 const ONSITE_KM=0.5, TODAY=new Date("2026-06-26");
 const SLA={first:{Alpha:{dev:1,design:2},Beta:{dev:2,design:5},Gamma:{dev:3,design:8},Omega:{dev:0,design:0}},
@@ -583,15 +584,24 @@ function drillTable(leads){
        <td>${statusPill(d.status)}</td><td class="tat-cell">${tat}</td></tr>`;}).join("")+`</tbody></table></div>`;
 }
 function drillBreak(leads,title){
-  // city-wise + designer-wise quick counts
-  const byCity={},byDsn={};
-  leads.forEach(L=>{byCity[L.city]=(byCity[L.city]||0)+1;const n=L.design.assignedTo||"Unassigned";byDsn[n]=(byDsn[n]||0)+1;});
-  const chips=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<span class="pill p-gray" style="margin:2px"><span class="d"></span>${k}: ${v}</span>`).join("");
-  return `<div style="margin-bottom:10px"><div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">By city</div>${chips(byCity)}</div>
-   <div style="margin-bottom:14px"><div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">By designer</div>${chips(byDsn)}</div>`+drillTable(leads);
+  window._drillLeads=leads;window._drillTitle=title;
+  return `<div class="dtab" id="drillTabs"><button class="on" onclick="drillDim('city',this)">By City</button><button onclick="drillDim('month',this)">By Month (HOTO)</button><button onclick="drillDim('size',this)">By Size</button><button onclick="drillDim('designer',this)">By Designer</button></div><div id="drillBody"></div>`;
 }
-function showModal(title,sub,html){$("#mTitle").textContent=title;$("#mSub").textContent=sub;$("#mBody").innerHTML=html;$("#modal").classList.add("show");}
-function drillSet(ids,title){const L=leadsByIds(ids);showModal(title,`${L.length} lead(s)`,drillBreak(L,title));}
+function drillDim(dim,btn){
+  if(btn){[...btn.parentNode.children].forEach(b=>b.classList.remove("on"));btn.classList.add("on");}
+  const leads=window._drillLeads||[];const total=leads.length;
+  const keyFn={city:x=>x.city||"—",month:x=>monthLbl(monthKey(x.hoto))||"—",size:x=>x.cat,designer:x=>x.design.assignedTo||"Unassigned"}[dim];
+  const grp={};leads.forEach(x=>{const k=keyFn(x);(grp[k]=grp[k]||[]).push(x);});
+  const rows=Object.entries(grp).sort((a,b)=>b[1].length-a[1].length);
+  const head={city:"City",month:"Month",size:"Size",designer:"Designer"}[dim];
+  let html=`<div class="tbl-wrap"><table><thead><tr><th>${head}</th><th>Count</th><th>% of total</th></tr></thead><tbody>`+
+   rows.map(([k,arr])=>{const pct=total?Math.round(arr.length/total*1000)/10:0;const col=pct>=15?"var(--green)":pct>=5?"var(--amber)":"var(--red)";
+     return `<tr><td><b>${k}</b></td><td><a class="link" onclick='drillSet(${JSON.stringify(arr.map(a=>a.id))},"${String(k).replace(/"/g,"")}")'>${arr.length}</a></td><td style="color:${col};font-weight:600">${pct}%</td></tr>`;}).join("")+`</tbody></table></div>`;
+  document.getElementById("drillBody").innerHTML=html;
+}
+function showModal(title,sub,html){$("#mTitle").textContent=title;$("#mSub").textContent=sub;$("#mBody").innerHTML=html;$("#modal").classList.add("show");
+  const t=document.getElementById("drillTabs");if(t)drillDim("city",t.querySelector("button"));}
+function drillSet(ids,title){const L=leadsByIds(ids);showModal(title,`${L.length} project(s) · click a row for journey / DEV / design`,drillTable(L));}
 function drillCity(c){const L=filtered().filter(x=>x.city===c);showModal("City — "+c,`${L.length} lead(s)`,drillBreak(L,c));}
 function drillCat(c){const L=filtered().filter(x=>x.cat===c);showModal("Category — "+c,`${L.length} lead(s)`,drillBreak(L,c));}
 function drillHoto(m){const L=filtered().filter(x=>monthKey(x.hoto)===m);showModal("HOTO — "+monthLbl(m),`${L.length} lead(s)`,drillBreak(L,m));}
@@ -774,6 +784,7 @@ $("#projSearch").addEventListener("input",renderProjects);
 
 function renderAll(){renderOverview();renderInsights();renderMonthly();renderDesignerSummary();renderFunnel();renderDev();renderDesign();renderPending();renderTat();renderCohort();renderProjects();renderTeam();if(map)drawMarkers();}
 buildFilters();renderAll();
+if(APPS_SCRIPT_URL)setTimeout(toggleConnect,80);
 
 /* ====== live connect ====== */
 /* ============================================================
@@ -807,7 +818,15 @@ function pick(row,...keys){for(const k of keys){if(row[k]!=null&&String(row[k]).
 function baseId(id){return String(id||"").split("|")[0].split("~")[0].trim();}
 function rvNum(uid){const m=String(uid).match(/(?:RV\|?|\|R)(\d+)/i);return m?+m[1]:0;}
 function splitLL(s){if(!s)return[null,null];const m=String(s).split(/[, ]+/).map(parseFloat).filter(v=>!isNaN(v));return m.length>=2?[m[0],m[1]]:[null,null];}
-function isoDate(s){if(!s)return"";const d=new Date(s);return isNaN(d)?String(s).slice(0,10):d.toISOString().slice(0,10);}
+function isoDate(s){
+  if(!s)return"";s=String(s).trim();if(!s)return"";
+  // already ISO (from Apps Script) or yyyy-mm-dd
+  let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return `${m[1]}-${m[2]}-${m[3]}`;
+  // dd/mm/yyyy or mm/dd/yyyy (with optional time) — assume dd/mm/yyyy (India), fall back if day>12
+  m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if(m){let a=+m[1],b=+m[2],y=+m[3];if(y<100)y+=2000;let dd=a,mm=b;if(a>12&&b<=12){dd=a;mm=b;}else if(b>12&&a<=12){dd=b;mm=a;}return `${y}-${String(mm).padStart(2,"0")}-${String(dd).padStart(2,"0")}`;}
+  const d=new Date(s);return isNaN(d)?"":d.toISOString().slice(0,10);
+}
 function normConn(s){s=String(s||"").toLowerCase();if(s.includes("complet"))return"Completed";if(s.includes("cancel"))return"Cancelled";if(s.includes("resched"))return"Rescheduled";if(s.includes("pend"))return"Pending";return s?"Rescheduled":"Pending";}
 function devBlocks(r){const mk=(d,c,s,ts,ll)=>{if(!d&&!ts&&!c&&!s)return null;const[la,ln]=splitLL(ll);return{sched:isoDate(d),connected:normConn(c||s),ts:ts?String(ts).trim():"",lat:la,lng:ln};};
   const b=[mk(pick(r,"Meeting scheduled date"),pick(r,"Meeting connected ?"),pick(r,"Meeting status"),pick(r,"Meeting Timestamp"),pick(r,"Meeting Latlong")),
@@ -842,7 +861,8 @@ function buildDesign(drows,m0){
     finalCap,instType:latest.instType||"Rooftop",cancelReason:pick(last,"Design Delay Reason"),
     holdStart:isoDate(pick(last,"Design On Hold")),holdEnd:isoDate(pick(last,"Design Unhold")),holdReason:pick(last,"Reason for Hold"),_all:all};}
 function buildLead(bid,rows,drows){
-  const m0=rows[0];const[lat,lng]=splitLL(pick(m0,"Lead Lat-Long"));
+  rows=Array.isArray(rows)?rows:[];drows=Array.isArray(drows)?drows:[];
+  const m0=rows[0]||{};const[lat,lng]=splitLL(pick(m0,"Lead Lat-Long"));
   const design=buildDesign(drows,m0);
   const devRows=rows.filter(r=>devFromRow(r));
   const devHistory=devRows.map((r,i)=>{const dv=devFromRow(r);const eff=dv.blocks.slice(-1)[0];const cd=eff.ts?eff.ts.split(" ")[0]:null;
@@ -857,22 +877,38 @@ function buildLead(bid,rows,drows){
     dev:devRows.length?devFromRow(devRows[0]):null,devHistory:devHistory.length?devHistory:undefined,
     design,designHistory:design._all&&design._all.length?design._all:undefined});}
 
+async function loadData(){
+  if(APPS_SCRIPT_URL){
+    const res=await fetch(APPS_SCRIPT_URL);
+    if(!res.ok)throw new Error("Apps Script HTTP "+res.status);
+    const j=await res.json();
+    return {master:j.master||[],design:j.design||[],users:j.users||[],att:j.attendance||[]};
+  }
+  const [master,design,users,att]=await Promise.all([
+    fetchCsv(GIDS.master),fetchCsv(GIDS.design),fetchCsv(GIDS.users).catch(()=>[]),fetchCsv(GIDS.attendance).catch(()=>[])]);
+  return {master,design,users,att};
+}
 async function toggleConnect(){
   $("#updstamp").textContent="Connecting…";$("#connBtn").classList.remove("live");
   try{
-    const [master,design,users,att]=await Promise.all([
-      fetchCsv(GIDS.master),fetchCsv(GIDS.design),fetchCsv(GIDS.users).catch(()=>[]),fetchCsv(GIDS.attendance).catch(()=>[])]);
-    if(!master.length)throw new Error("Master sheet empty / unreachable");
-    const dByLead={};design.forEach(r=>{const b=baseId(pick(r,"Lead ID"));if(b)(dByLead[b]=dByLead[b]||[]).push(r);});
-    const mByLead={};master.forEach(r=>{const b=baseId(pick(r,"Lead ID"));if(b)(mByLead[b]=mByLead[b]||[]).push(r);});
-    const leads=Object.entries(mByLead).map(([b,rows])=>buildLead(b,rows,dByLead[b]||[]));
+    const {master,design,users,att}=await loadData();
+    const M=Array.isArray(master)?master:[],D=Array.isArray(design)?design:[];
+    if(!M.length)throw new Error("Master sheet empty / unreachable");
+    const dByLead={};D.forEach(r=>{const b=baseId(pick(r,"Lead ID"));if(b)(dByLead[b]=dByLead[b]||[]).push(r);});
+    const mByLead={};M.forEach(r=>{const b=baseId(pick(r,"Lead ID"));if(b)(mByLead[b]=mByLead[b]||[]).push(r);});
+    const leads=[];let skipped=0;
+    for(const [b,rows] of Object.entries(mByLead)){
+      try{leads.push(buildLead(b,rows,dByLead[b]||[]));}catch(err){skipped++;if(skipped<=3)console.warn("skip lead",b,err);}
+    }
+    if(!leads.length)throw new Error("0 leads mapped — check the header row is row 1");
     DATA.leads=leads;
-    if(users.length)DATA.users=users.map(u=>({id:pick(u,"User_ID"),name:pick(u,"User Name","Name"),role:(pick(u,"Access Type")||"").toUpperCase().includes("ODE")?"ODE":(pick(u,"Access Type")||"").toUpperCase().includes("DE")&&!(pick(u,"Access Type")||"").toUpperCase().includes("DEV")?"DE":"DEV",city:pick(u,"City")}));
-    if(att.length)DATA.attendance=att.map(a=>({name:pick(a,"DEV Name"),present:/present/i.test(pick(a,"Present","Attendance Day status"))?"Present":(pick(a,"Leave")?"Leave":"—"),avail:pick(a,"Availablity")||"—"}));
+    if(Array.isArray(users)&&users.length)DATA.users=users.map(u=>({id:pick(u,"User_ID"),name:pick(u,"User Name","Name"),role:(pick(u,"Access Type")||"").toUpperCase().includes("ODE")?"ODE":((pick(u,"Access Type")||"").toUpperCase().replace("DEV","").includes("DE")?"DE":"DEV"),city:pick(u,"City")}));
+    if(Array.isArray(att)&&att.length)DATA.attendance=att.map(a=>({name:pick(a,"DEV Name"),present:/present/i.test(pick(a,"Present","Attendance Day status"))?"Present":(pick(a,"Leave")?"Leave":"—"),avail:pick(a,"Availablity")||"—"}));
     buildFilters();renderAll();
-    $("#connBtn").classList.add("live");$("#updstamp").textContent=`Live · ${leads.length} leads · ${design.length} design rows`;
+    $("#connBtn").classList.add("live");$("#updstamp").textContent=`Live · ${leads.length} leads · ${D.length} design rows${skipped?` · ${skipped} skipped`:""}`;
   }catch(e){
-    $("#updstamp").textContent="Couldn't load — share sheet as 'Anyone with link'. Using sample. ("+e.message+")";
+    $("#updstamp").textContent="Couldn't load: "+e.message+" — using sample.";
+    console.error(e);
   }
 }
 </script>
