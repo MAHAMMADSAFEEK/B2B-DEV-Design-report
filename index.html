@@ -35,12 +35,12 @@ h1,h2,h3,h4{font-family:'Space Grotesk';font-weight:600;letter-spacing:-.01em}
 .tbtn:hover{background:rgba(255,255,255,.2)}
 .tbtn.live{background:#15633F;border-color:#1E8554}
 .conn{display:none}
-.tabs{background:#F0F4F8;padding:11px 26px 0;display:flex;gap:6px;position:sticky;top:60px;z-index:1100;overflow-x:auto;border-bottom:1px solid var(--line)}
+.tabs{background:#EAF0F6;padding:10px 26px 0;display:flex;gap:6px;position:sticky;top:132px;z-index:1090;overflow-x:auto;border-bottom:1px solid var(--line)}
 .tab{color:var(--txt-2);padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;background:#fff;border:1px solid var(--line);border-bottom:none;border-radius:9px 9px 0 0;margin-bottom:-1px}
 .tab:hover{color:var(--ink);background:#F7FAFD}
 .tab.active{color:var(--blue);background:#fff;border-color:var(--line);box-shadow:0 -2px 0 var(--blue) inset}
 /* filter bar */
-.fbar{background:var(--surface);border-bottom:1px solid var(--line);padding:13px 26px;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;position:sticky;top:103px;z-index:1000;box-shadow:0 1px 4px rgba(14,27,42,.05)}
+.fbar{background:var(--surface);border-bottom:1px solid var(--line);padding:13px 26px;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;position:sticky;top:66px;z-index:1100;box-shadow:0 1px 4px rgba(14,27,42,.05)}
 .fbar .ftitle{font-size:11px;font-weight:700;color:var(--txt-3);text-transform:uppercase;letter-spacing:.07em;align-self:center;margin-right:4px}
 .ms{position:relative;display:flex;flex-direction:column;gap:5px}
 .ms-label{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--txt-2)}
@@ -78,6 +78,8 @@ h1,h2,h3,h4{font-family:'Space Grotesk';font-weight:600;letter-spacing:-.01em}
 .mc-sub{font-size:9.5px;font-weight:700;border-radius:5px;padding:1px 5px;cursor:pointer}
 .mc-sub.on{background:var(--green-l);color:#127538}
 .mc-sub.dl{background:var(--red-l);color:#B91C1C}
+.mc-sub.tt{background:#E7ECF2;color:var(--ink)}
+.mc-sub.rr{background:var(--blue-l);color:#1D4FAB}
 .charts-row{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:15px}
 .charts-row2{display:grid;grid-template-columns:1.45fr 1fr;gap:15px;margin-bottom:15px}
 .chart-wrap{position:relative;height:225px}
@@ -221,6 +223,12 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
   <span class="conn" id="conn"><span id="connTxt"></span></span>
 </div>
 
+<div class="fbar" id="fbar">
+  <span class="ftitle">Filters</span>
+  <!-- multi-selects injected here -->
+  <span class="fclear" onclick="clearFilters()">Clear all</span>
+</div>
+
 <div class="tabs" id="tabs">
   <div class="tab active" data-v="overview">Overview</div>
   <div class="tab" data-v="funnel">Funnel</div>
@@ -233,12 +241,6 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
   <div class="tab" data-v="cohort">Cohort</div>
   <div class="tab" data-v="projects">Projects</div>
   <div class="tab" data-v="team">Team</div>
-</div>
-
-<div class="fbar" id="fbar">
-  <span class="ftitle">Filters</span>
-  <!-- multi-selects injected here -->
-  <span class="fclear" onclick="clearFilters()">Clear all</span>
 </div>
 
 <div class="wrap">
@@ -790,42 +792,41 @@ function renderProjects(){const q=($("#projSearch").value||"").toLowerCase();
 
 /* ====== TEAM ====== */
 function designerStats(){
-  const S={};const get=n=>S[n]||(S[n]={name:n,type:null,dA:0,rA:0,dC:0,rC:0,cap:0,aIds:new Set(),cIds:new Set()});
+  const S={};const get=n=>S[n]||(S[n]={name:n,type:null,dA:[],rA:[],dC:[],rC:[],pend:[],cap:0});
   DATA.leads.forEach(L=>(L.designAll||[]).forEach((v,i)=>{
     const n=v.designer;if(!n||n==="—")return;const s=get(n);if(!s.type)s.type=v.type||"Internal";
-    const isRev=i>0;if(isRev)s.rA++;else s.dA++;s.aIds.add(L.id);
-    if(v.status==="Completed"){if(isRev)s.rC++;else s.dC++;s.cap+=(v.cap||0);s.cIds.add(L.id);}
+    const isRev=i>0;(isRev?s.rA:s.dA).push(L.id);
+    if(v.status==="Completed"){(isRev?s.rC:s.dC).push(L.id);s.cap+=(v.cap||0);}else s.pend.push(L.id);
   }));
   (DATA.users||[]).filter(u=>u.role==="DE"||u.role==="ODE").forEach(u=>{const s=get(u.name);if(!s.type)s.type=u.role==="ODE"?"External":"Internal";});
   return S;
 }
+const uniq=a=>[...new Set(a)];
 function renderTeam(){
   const users=DATA.users||[];const devs=users.filter(u=>u.role==="DEV");
   const S=designerStats();const all=Object.values(S);
-  const internal=all.filter(s=>s.type==="Internal").sort((a,b)=>(b.dA+b.rA)-(a.dA+a.rA));
-  const external=all.filter(s=>s.type==="External").sort((a,b)=>(b.dA+b.rA)-(a.dA+a.rA));
-  const dsnDoneTotal=all.reduce((a,s)=>a+s.dC+s.rC,0);
+  const score=s=>uniq([...s.dA,...s.rA]).length;
+  const internal=all.filter(s=>s.type==="Internal").sort((a,b)=>score(b)-score(a));
+  const external=all.filter(s=>s.type==="External").sort((a,b)=>score(b)-score(a));
+  const dsnDoneTotal=all.reduce((a,s)=>a+uniq([...s.dC,...s.rC]).length,0);
   $("#teamKpis").innerHTML=kpi("Designers",all.length,`${internal.length} internal · ${external.length} external`,"var(--solar)")
     +kpi("DEVs",devs.length,"field engineers","var(--blue)")
     +kpi("Designs completed",dsnDoneTotal,"design + revision","var(--green)")
-    +kpi("Idle designers",all.filter(s=>(s.dA+s.rA)===0).length,"0 assigned","var(--amber)");
-  const bcell=(t,d,r)=>`<div class="mc-subs" style="justify-content:center"><span class="mc-sub" style="background:#E7ECF2;color:var(--ink)">T ${t}</span><span class="mc-sub on">D ${d}</span><span class="mc-sub" style="background:var(--blue-l);color:#1D4FAB">R ${r}</span></div>`;
+    +kpi("Idle designers",all.filter(s=>score(s)===0).length,"0 assigned","var(--amber)");
+  const sub=(ids,label,cls,lbl)=>{const u=uniq(ids);return `<span class="mc-sub ${cls}" ${u.length?`onclick='drillSet(${JSON.stringify(u)},"${(lbl+" "+label).replace(/"/g,"")}")'`:""} style="cursor:${u.length?"pointer":"default"}">${label} ${u.length}</span>`;};
+  const bcell=(dIds,rIds,lbl)=>`<div class="mc-subs" style="justify-content:center">${sub(uniq([...dIds,...rIds]),"T","tt",lbl)}${sub(dIds,"D","on",lbl)}${sub(rIds,"R","rr",lbl)}</div>`;
+  const numCell=(ids,lbl)=>{const u=uniq(ids);return u.length?`<span class="mc-n" onclick='drillSet(${JSON.stringify(u)},"${lbl.replace(/"/g,"")}")'>${u.length}</span>`:`<span class="mc-n z">0</span>`;};
   const tbl=list=>{
-    let tot={aA:0,aD:0,aR:0,cA:0,cD:0,cR:0,cap:0,pend:0};
-    const rows=list.map(s=>{const aTot=s.dA+s.rA,cTot=s.dC+s.rC,pend=aTot-cTot,pct=aTot?Math.round(cTot/aTot*100):0;
-      tot.aD+=s.dA;tot.aR+=s.rA;tot.cD+=s.dC;tot.cR+=s.rC;tot.cap+=s.cap;tot.pend+=pend;
+    const rows=list.map(s=>{const aT=uniq([...s.dA,...s.rA]).length,cT=uniq([...s.dC,...s.rC]).length,pend=uniq(s.pend).length,pct=aT?Math.round(cT/aT*100):0;
       return `<tr><td class="ml"><a class="link" onclick='openDesignerDetail(${JSON.stringify(s.name)})'>${s.name}</a></td>
-        <td>${bcell(aTot,s.dA,s.rA)}</td><td>${bcell(cTot,s.dC,s.rC)}</td>
-        <td class="mono">${s.cap?Math.round(s.cap)+" kWp":"—"}</td><td>${pend}</td>
+        <td>${bcell(s.dA,s.rA,s.name+" assigned")}</td><td>${bcell(s.dC,s.rC,s.name+" completed")}</td>
+        <td>${s.cap?`<span class="mc-n" onclick='drillSet(${JSON.stringify(uniq([...s.dC,...s.rC]))},"${s.name} completed")'>${Math.round(s.cap)} kWp</span>`:'<span class="mc-n z">—</span>'}</td>
+        <td>${numCell(s.pend,s.name+" pending")}</td>
         <td><b style="color:${pct>=70?'var(--green)':pct>=40?'var(--amber)':'var(--red)'}">${pct}%</b></td></tr>`;}).join("");
-    const aTot=tot.aD+tot.aR,cTot=tot.cD+tot.cR;
-    return `<thead><tr><th class="ml" style="text-align:left">Designer</th><th>Assigned (T/D/R)</th><th>Completed (T/D/R)</th><th>Capacity</th><th>Pending</th><th>%</th></tr></thead><tbody>${rows||`<tr><td colspan="6" class="muted" style="padding:20px;text-align:center">No designers.</td></tr>`}</tbody>
-      <tfoot><tr style="font-weight:700;background:#F7F9FB"><td class="ml">Grand total</td><td>${bcell(aTot,tot.aD,tot.aR)}</td><td>${bcell(cTot,tot.cD,tot.cR)}</td><td class="mono">${tot.cap?Math.round(tot.cap)+" kWp":"—"}</td><td>${tot.pend}</td><td>${aTot?Math.round(cTot/aTot*100):0}%</td></tr></tfoot>`;
+    return `<thead><tr><th class="ml" style="text-align:left">Designer</th><th>Assigned (T/D/R)</th><th>Completed (T/D/R)</th><th>Capacity</th><th>Pending</th><th>%</th></tr></thead><tbody>${rows||`<tr><td colspan="6" class="muted" style="padding:20px;text-align:center">No designers.</td></tr>`}</tbody>`;
   };
   $("#intTbl").className="mtbl";$("#extTbl").className="mtbl";
-  $("#intTbl").innerHTML=tbl(internal);
-  $("#extTbl").innerHTML=tbl(external);
-  // DEV availability
+  $("#intTbl").innerHTML=tbl(internal);$("#extTbl").innerHTML=tbl(external);
   const att=Object.fromEntries((DATA.attendance||[]).map(a=>[a.name,a]));
   const devLoad={};DATA.leads.forEach(L=>{if(L.dev&&L.dev.devName)devLoad[L.dev.devName]=(devLoad[L.dev.devName]||0)+1;});
   $("#attTbl").innerHTML=`<thead><tr><th>DEV</th><th>Attendance</th><th>Availability</th><th>Assigned</th></tr></thead><tbody>`+
@@ -834,15 +835,20 @@ function renderTeam(){
      :`<tr><td colspan="4" class="muted" style="padding:20px;text-align:center">No DEV roster.</td></tr>`)+`</tbody>`;
 }
 function openDesignerDetail(name){
-  const map={};const aIds={},cIds={};
-  DATA.leads.forEach(L=>(L.designAll||[]).forEach(v=>{if(v.designer!==name)return;
-    const am=monthKey(v.assigned);if(am){(map[am]=map[am]||{a:0,c:0}).a++;(aIds[am]=aIds[am]||new Set()).add(L.id);}
-    if(v.status==="Completed"){const cm=monthKey(v.completed);if(cm){(map[cm]=map[cm]||{a:0,c:0}).c++;(cIds[cm]=cIds[cm]||new Set()).add(L.id);}}}));
-  const months=Object.keys(map).sort();
-  const body=`<div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">Month</th><th>Assigned</th><th>Completed</th></tr></thead><tbody>`+
-   (months.length?months.map(m=>`<tr><td class="ml"><b>${monthLbl(m)}</b></td><td>${map[m].a?`<span class="mc-n" onclick='drillSet(${JSON.stringify([...(aIds[m]||[])])},"${name} assigned ${monthLbl(m)}")'>${map[m].a}</span>`:'<span class="mc-n z">0</span>'}</td><td>${map[m].c?`<span class="mc-n" onclick='drillSet(${JSON.stringify([...(cIds[m]||[])])},"${name} completed ${monthLbl(m)}")'>${map[m].c}</span>`:'<span class="mc-n z">0</span>'}</td></tr>`).join("")
-     :`<tr><td colspan="3" class="muted" style="padding:20px;text-align:center">No design records.</td></tr>`)+`</tbody></table></div>`;
-  showModal("Designer — "+name,"by assigned month · by completed month",body);
+  // per-month: assigned(D/R), completed(D/R), pending(D/R) with id sets
+  const M={};const m=(k)=>M[k]||(M[k]={aD:[],aR:[],cD:[],cR:[],pD:[],pR:[]});
+  DATA.leads.forEach(L=>(L.designAll||[]).forEach((v,i)=>{
+    if(v.designer!==name)return;const isRev=i>0;
+    const am=monthKey(v.assigned);if(am){const r=m(am);(isRev?r.aR:r.aD).push(L.id);if(v.status!=="Completed")(isRev?r.pR:r.pD).push(L.id);}
+    if(v.status==="Completed"){const cm=monthKey(v.completed);if(cm){const r=m(cm);(isRev?r.cR:r.cD).push(L.id);}}
+  }));
+  const months=Object.keys(M).sort();
+  const cell=(d,r,lbl)=>{const u=uniq([...d,...r]);if(!u.length)return'<span class="mc-n z">0</span>';
+    return `<div class="mc"><span class="mc-n" onclick='drillSet(${JSON.stringify(u)},"${lbl.replace(/"/g,"")}")'>${u.length}</span><div class="mc-subs"><span class="mc-sub on" ${uniq(d).length?`onclick='drillSet(${JSON.stringify(uniq(d))},"${(lbl+" design").replace(/"/g,"")}")'`:""}>D ${uniq(d).length}</span><span class="mc-sub rr" ${uniq(r).length?`onclick='drillSet(${JSON.stringify(uniq(r))},"${(lbl+" revision").replace(/"/g,"")}")'`:""}>R ${uniq(r).length}</span></div></div>`;};
+  const body=`<div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">Month</th><th>Assigned</th><th>Completed</th><th>Pending</th></tr></thead><tbody>`+
+   (months.length?months.map(k=>{const r=M[k];return `<tr><td class="ml"><b>${monthLbl(k)}</b></td><td>${cell(r.aD,r.aR,name+" assigned "+monthLbl(k))}</td><td>${cell(r.cD,r.cR,name+" completed "+monthLbl(k))}</td><td>${cell(r.pD,r.pR,name+" pending "+monthLbl(k))}</td></tr>`;}).join("")
+     :`<tr><td colspan="4" class="muted" style="padding:20px;text-align:center">No design records.</td></tr>`)+`</tbody></table></div>`;
+  showModal("Designer — "+name,"monthly · scheduled / completed / pending · design + revision",body);
 }
 
 /* ====== lead journey modal (with DEV / Design detail tabs) ====== */
