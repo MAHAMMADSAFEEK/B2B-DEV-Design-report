@@ -40,12 +40,14 @@ h1,h2,h3,h4{font-family:'Space Grotesk';font-weight:600;letter-spacing:-.01em}
 .tab:hover{color:var(--ink);background:#F7FAFD}
 .tab.active{color:var(--blue);background:#fff;border-color:var(--line);box-shadow:0 -2px 0 var(--blue) inset}
 /* filter bar */
-.fbar{background:var(--surface);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;position:sticky;top:103px;z-index:1000}
-.fbar .ftitle{font-size:11.5px;font-weight:600;color:var(--txt-2);text-transform:uppercase;letter-spacing:.05em;margin-right:2px}
-.ms{position:relative}
-.ms-btn{font:inherit;font-size:12.5px;border:1px solid var(--line-2);background:var(--surface);color:var(--txt);padding:6px 11px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
-.ms-btn .cnt{background:var(--blue);color:#fff;border-radius:10px;font-size:10px;padding:0 6px;font-weight:600}
-.ms-btn:hover{border-color:var(--blue)}
+.fbar{background:var(--surface);border-bottom:1px solid var(--line);padding:13px 26px;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;position:sticky;top:103px;z-index:1000;box-shadow:0 1px 4px rgba(14,27,42,.05)}
+.fbar .ftitle{font-size:11px;font-weight:700;color:var(--txt-3);text-transform:uppercase;letter-spacing:.07em;align-self:center;margin-right:4px}
+.ms{position:relative;display:flex;flex-direction:column;gap:5px}
+.ms-label{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--txt-2)}
+.ms-btn{font:inherit;font-size:13px;border:1px solid var(--line-2);background:#F7FAFD;color:var(--txt);padding:8px 12px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:122px}
+.ms-btn:hover{border-color:var(--blue);background:#fff}
+.ms-btn.has{border-color:var(--blue);background:var(--blue-l);color:#1D4FAB;font-weight:600}
+.ms-btn .car{color:var(--txt-3)}
 .ms-pop{display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--surface);border:1px solid var(--line-2);border-radius:10px;box-shadow:0 8px 28px rgba(14,27,42,.16);padding:8px;width:210px;z-index:1500;max-height:280px;overflow-y:auto}
 .ms-pop.open{display:block}
 .ms-pop input.search{width:100%;font:inherit;font-size:12.5px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;margin-bottom:6px}
@@ -62,6 +64,20 @@ h1,h2,h3,h4{font-family:'Space Grotesk';font-weight:600;letter-spacing:-.01em}
 .kpi .lbl{font-size:11px;color:var(--txt-2);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:7px;margin-top:3px}
 .det{font-size:11.5px;font-weight:600;color:var(--blue);background:var(--blue-l);padding:3px 9px;border-radius:20px;cursor:pointer}
 .det:hover{background:#D3E4FA}
+.mtbl th{text-align:center}
+.mtbl th.grp-dev{background:#1E4179;color:#fff;border-bottom:2px solid #2563C9}
+.mtbl th.grp-dsn{background:#15633F;color:#fff;border-bottom:2px solid #16A34A}
+.mtbl th.grp-tot{background:#3A2A5E;color:#fff}
+.mtbl td{text-align:center;vertical-align:middle}
+.mtbl td.ml{text-align:left}
+.mc{display:inline-flex;flex-direction:column;gap:3px;align-items:center}
+.mc-n{font-family:'IBM Plex Mono';font-weight:600;font-size:13.5px;background:#EEF2F6;border-radius:7px;padding:3px 11px;min-width:34px;text-align:center;cursor:pointer;color:var(--ink)}
+.mc-n:hover{background:#DCE6F0}
+.mc-n.z{color:var(--txt-3);background:#F4F6F9;cursor:default}
+.mc-subs{display:flex;gap:3px}
+.mc-sub{font-size:9.5px;font-weight:700;border-radius:5px;padding:1px 5px;cursor:pointer}
+.mc-sub.on{background:var(--green-l);color:#127538}
+.mc-sub.dl{background:var(--red-l);color:#B91C1C}
 .charts-row{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:15px}
 .charts-row2{display:grid;grid-template-columns:1.45fr 1fr;gap:15px;margin-bottom:15px}
 .chart-wrap{position:relative;height:225px}
@@ -91,7 +107,7 @@ h1,h2,h3,h4{font-family:'Space Grotesk';font-weight:600;letter-spacing:-.01em}
 .legend .it{display:flex;align-items:center;gap:6px;color:var(--txt-2)}.legend .sw{width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line-2)}
 .map-ctl{display:flex;gap:5px}.map-ctl button{font:inherit;font-size:12px;border:1px solid var(--line-2);background:var(--surface);color:var(--txt-2);padding:5px 10px;border-radius:7px;cursor:pointer}.map-ctl button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .tbl-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:10px 13px;background:#F7F9FB;color:var(--txt-2);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--line);white-space:nowrap}
+th{text-align:left;padding:11px 13px;background:#1E2A44;color:#E8EEF6;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #1E2A44;white-space:nowrap}
 td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}tr:hover td{background:#FAFCFE}
 .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
 .pill .d{width:6px;height:6px;border-radius:50%}
@@ -172,6 +188,10 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 .tl-it{position:relative;padding-bottom:16px}.tl-it::before{content:'';position:absolute;left:-22px;top:3px;width:12px;height:12px;border-radius:50%;background:#fff;border:2.5px solid var(--line-2)}
 .tl-it.ok::before{border-color:var(--green);background:var(--green)}.tl-it.warn::before{border-color:var(--amber);background:var(--amber)}.tl-it.bad::before{border-color:var(--red);background:var(--red)}
 .tl-it .t{font-weight:600;font-size:13px}.tl-it .m{font-size:12px;color:var(--txt-2);font-family:'IBM Plex Mono'}
+.tl-it.jdev::before{border-color:#2563C9;background:#2563C9}
+.tl-it.jdsn::before{border-color:#16A34A;background:#16A34A}
+.tl-it.jdev .t{color:#1D4FAB}
+.tl-it.jdsn .t{color:#127538}
 .dtab{display:flex;gap:6px;margin-bottom:14px}.dtab button{font:inherit;font-size:13px;border:1px solid var(--line-2);background:var(--surface);padding:6px 13px;border-radius:8px;cursor:pointer}.dtab button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .kv{display:grid;grid-template-columns:170px 1fr;gap:6px 14px;font-size:13px}.kv .k{color:var(--txt-2)}.kv .v{font-weight:500}
 .note{background:var(--amber-l);border:1px solid #F0D8A0;border-radius:var(--r);padding:11px 13px;font-size:12px;color:#8A6206;margin-bottom:15px;display:flex;gap:9px}
@@ -192,7 +212,7 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 <div class="topbar">
   <div class="logo">
     <img class="logo-mark" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2rP2rpzHaGVMqgjZvGiLuzn9jTxvUz2CAUA&s" alt="logo" onerror="this.outerHTML='&lt;svg class=&quot;logo-mark&quot; viewBox=&quot;0 0 48 48&quot;&gt;&lt;circle cx=&quot;24&quot; cy=&quot;24&quot; r=&quot;9&quot; fill=&quot;%23F5A623&quot;/&gt;&lt;/svg&gt;'">
-    <div class="logo-txt"><b>SolarOps <span class="lt">DEV &amp; Design</span></b><span id="updstamp">Society solar · sample data</span></div>
+    <div class="logo-txt"><b>SolarOps <span class="lt">DEV &amp; Design</span></b><span id="updstamp">Refresh the tab to load live data</span></div>
   </div>
   <div class="spacer"></div>
   <div class="userbox"><b>operations@solarsquare.in</b><br><span>ADMIN · FULL ACCESS</span></div>
@@ -242,6 +262,8 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
   <div class="view" id="v-funnel">
     <div class="panel"><div class="panel-h"><h3>Lead → DEV → Design funnel</h3><span class="hint">click any block for the underlying leads</span></div>
       <div class="panel-b" id="funnel"></div></div>
+    <div class="panel" style="margin-top:15px"><div class="panel-h"><h3>Lead breakdown</h3><span class="hint">DEV / re-visit / revision counts — click a number</span></div>
+      <div class="panel-b flush"><div class="tbl-wrap"><table id="leadBreakTbl"></table></div></div></div>
   </div>
 
   <div class="view" id="v-map">
@@ -296,9 +318,11 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 
   <div class="view" id="v-team"><div class="kpis" id="teamKpis"></div>
     <div class="grid g-2">
-      <div class="panel"><div class="panel-h"><h3>DEV availability</h3></div><div class="panel-b flush"><div class="tbl-wrap"><table id="attTbl"></table></div></div></div>
-      <div class="panel"><div class="panel-h"><h3>Designer roster &amp; load</h3><span class="hint">internal (DE) · external (ODE)</span></div><div class="panel-b" id="dsnLoad"></div></div>
-    </div></div>
+      <div class="panel"><div class="panel-h"><h3>Internal designers (DE)</h3><span class="hint">click a name for monthly detail</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="intTbl"></table></div></div></div>
+      <div class="panel"><div class="panel-h"><h3>External designers (ODE)</h3><span class="hint">click a name for monthly detail</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="extTbl"></table></div></div></div>
+    </div>
+    <div class="panel" style="margin-top:15px"><div class="panel-h"><h3>DEV availability</h3></div><div class="panel-b flush"><div class="tbl-wrap"><table id="attTbl"></table></div></div></div>
+  </div>
 </div>
 
 <div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
@@ -349,6 +373,8 @@ function enrich(L){
   L.cat=catFromCap((L.design&&L.design.finalCap>0)?L.design.finalCap:L.capacity);
   L.devReqState=L.devReq==="Yes"?"Required":L.devReq==="No"?"Not required":"Not assigned";
   if(!L.devStatus)L.devStatus=L.dev?L.dev.finalStatus:(L.devReq==="No"?"DEV not required":L.devReq===""?"Project not updated":"DEV assign pending");
+  // design clock start: DEV completed date (if DEV required) → else Capacity Updated date (J) → else HOTO
+  L.designStart=(L.devReq==="Yes")?(L.dev?L.dev.completedDate:null):(L.capacityUpdated||L.hoto);
   if(L.dev){const b=L.dev.blocks,eff=b[b.length-1];L.dev.effective=eff;
     L.dev.reschedules=b.filter(x=>x.connected==="Rescheduled").length;
     L.dev.completedDate=isoDate(eff.ts)||null;
@@ -376,8 +402,7 @@ function enrich(L){
   L.designAll=(L.designHistory&&L.designHistory.length)?L.designHistory:[{rev:d.revisions>0?"Latest (R"+d.revisions+")":"Original",designer:d.designer,type:d.type,assigned:d.assigned,completed:d.completed,status:d.status,tat:d.designTat,target:d.target,sla:d.slaState,holdDays:d.holdDays,note:d.cancelReason||""}];
   return L;
 }
-let DATA=JSON.parse(JSON.stringify(SAMPLE));
-DATA.leads.forEach(enrich);
+let DATA={leads:[],attendance:[],users:[]};
 
 /* ====== FILTERS ====== */
 const FILTERS={hoto:[],city:[],cat:[],devStatus:[],dsnStatus:[],assigned:[],designer:[],type:[]};
@@ -394,25 +419,27 @@ const FDEF=[
  {key:"designer",label:"Designer",get:l=>[...new Set(l.map(x=>x.design.assignedTo).filter(Boolean))].sort(),disp:v=>v,match:(x,v)=>v.includes(x.design.assignedTo)},
  {key:"type",label:"Int / Ext",get:()=>["Internal","External"],disp:v=>v,match:(x,v)=>v.includes(x.design.type)},
 ];
+function fvalText(key){const n=FILTERS[key].length;return n===0?"All":n===1?FILTERS[key][0]:n+" selected";}
 function buildFilters(){
   const bar=$("#fbar"); $$(".ms",bar).forEach(e=>e.remove());
   const clear=$(".fclear");
   FDEF.forEach(f=>{
     const opts=f.get(DATA.leads);
     const ms=document.createElement("div");ms.className="ms";
-    ms.innerHTML=`<button class="ms-btn" data-k="${f.key}">${f.label}<span class="cnt" style="display:none"></span> ▾</button>
+    ms.innerHTML=`<label class="ms-label">${f.label}</label><button class="ms-btn" data-k="${f.key}"><span class="ms-val">${fvalText(f.key)}</span><span class="car">▾</span></button>
       <div class="ms-pop"><input class="search" placeholder="Search…"><div class="ms-opts"></div></div>`;
     bar.insertBefore(ms,clear);
-    const optsBox=ms.querySelector(".ms-opts");
-    optsBox.innerHTML=opts.map(o=>`<label class="ms-opt"><input type="checkbox" value="${o}"> ${f.disp(o)}</label>`).join("")||'<div class="muted" style="padding:6px;font-size:12px">none</div>';
-    ms.querySelector(".ms-btn").onclick=e=>{e.stopPropagation();const p=ms.querySelector(".ms-pop");const open=p.classList.contains("open");$$(".ms-pop").forEach(x=>x.classList.remove("open"));if(!open)p.classList.add("open");};
+    const optsBox=ms.querySelector(".ms-opts");const btn=ms.querySelector(".ms-btn");
+    optsBox.innerHTML=opts.map(o=>`<label class="ms-opt"><input type="checkbox" value="${o}" ${FILTERS[f.key].includes(String(o))?"checked":""}> ${f.disp(o)}</label>`).join("")||'<div class="muted" style="padding:6px;font-size:12px">none</div>';
+    btn.onclick=e=>{e.stopPropagation();const p=ms.querySelector(".ms-pop");const open=p.classList.contains("open");$$(".ms-pop").forEach(x=>x.classList.remove("open"));if(!open)p.classList.add("open");};
     ms.querySelector(".search").oninput=e=>{const q=e.target.value.toLowerCase();$$(".ms-opt",optsBox).forEach(o=>o.style.display=o.textContent.toLowerCase().includes(q)?"":"none");};
     optsBox.onchange=()=>{FILTERS[f.key]=[...optsBox.querySelectorAll("input:checked")].map(i=>i.value);
-      const c=ms.querySelector(".cnt");c.style.display=FILTERS[f.key].length?"inline-block":"none";c.textContent=FILTERS[f.key].length;renderAll();};
+      btn.querySelector(".ms-val").textContent=fvalText(f.key);btn.classList.toggle("has",FILTERS[f.key].length>0);renderAll();};
+    btn.classList.toggle("has",FILTERS[f.key].length>0);
   });
 }
 document.addEventListener("click",()=>$$(".ms-pop").forEach(x=>x.classList.remove("open")));
-function clearFilters(){Object.keys(FILTERS).forEach(k=>FILTERS[k]=[]);$$(".ms-opts input").forEach(i=>i.checked=false);$$(".ms-btn .cnt").forEach(c=>c.style.display="none");renderAll();}
+function clearFilters(){Object.keys(FILTERS).forEach(k=>FILTERS[k]=[]);$$(".ms-opts input").forEach(i=>i.checked=false);$$(".ms-btn").forEach(b=>{b.classList.remove("has");const v=b.querySelector(".ms-val");if(v)v.textContent="All";});renderAll();}
 function filtered(){return DATA.leads.filter(L=>FDEF.every(f=>!FILTERS[f.key].length||f.match(L,FILTERS[f.key])));}
 
 /* ====== render building blocks ====== */
@@ -482,7 +509,7 @@ function filterTo(key,val){
   const ms=[...document.querySelectorAll(".ms")].find(m=>m.querySelector(`.ms-btn[data-k="${key}"]`));
   if(ms){const cb=ms.querySelector(`.ms-opts input[value="${val}"]`);if(cb)cb.checked=true;
     FILTERS[key]=[...ms.querySelectorAll(".ms-opts input:checked")].map(i=>i.value);
-    const c=ms.querySelector(".cnt");c.style.display=FILTERS[key].length?"inline-block":"none";c.textContent=FILTERS[key].length;}
+    const btn=ms.querySelector(".ms-btn");btn.querySelector(".ms-val").textContent=fvalText(key);btn.classList.toggle("has",FILTERS[key].length>0);}
   renderAll();go("design");}
 
 /* ====== INSIGHTS + MONTHLY + DESIGNER SUMMARY ====== */
@@ -513,18 +540,37 @@ function renderInsights(){
 }
 function renderMonthly(){
   const L=filtered();const mk=monthKey;
-  const months=[...new Set(L.flatMap(x=>[mk(x.received),mk(x.design.assigned),mk(x.design.completed),mk(x.dev?.permission),mk(x.dev?.completedDate)]).filter(Boolean))].sort();
-  const cell=(arr,lbl)=>arr.length?`<a class="link" onclick='drillSet(${JSON.stringify(arr.map(a=>a.id))},"${lbl}")'>${arr.length}</a>`:'<span class="muted">0</span>';
-  $("#monthlyTbl").innerHTML=`<thead><tr><th>Month</th><th>Leads</th><th>DEV assigned</th><th>DEV completed</th><th>Design assigned</th><th>Design completed</th><th>On-time</th></tr></thead><tbody>`+
-   months.map(m=>{
-     const leads=L.filter(x=>mk(x.received)===m);
-     const devA=L.filter(x=>x.dev&&mk(x.dev.permission)===m);
-     const devD=L.filter(x=>x.dev&&mk(x.dev.completedDate)===m);
-     const dsnA=L.filter(x=>mk(x.design.assigned)===m);
-     const dsnD=L.filter(x=>mk(x.design.completed)===m);
-     const onT=dsnD.filter(x=>x.design.slaState==="On time");
-     return `<tr><td class="mono" style="font-weight:500">${monthLbl(m)}</td><td>${cell(leads,monthLbl(m)+" leads")}</td><td>${cell(devA,monthLbl(m)+" DEV assigned")}</td><td>${cell(devD,monthLbl(m)+" DEV completed")}</td><td>${cell(dsnA,monthLbl(m)+" design assigned")}</td><td>${cell(dsnD,monthLbl(m)+" design completed")}</td><td>${cell(onT,monthLbl(m)+" on-time")} <span class="muted" style="font-size:11px">/ ${dsnD.length}</span></td></tr>`;}).join("")+`</tbody>`;
-  if(!months.length)$("#monthlyTbl").innerHTML+=`<tbody><tr><td colspan="7" style="text-align:center;padding:24px" class="muted">No data.</td></tr></tbody>`;
+  $("#monthlyTbl").className="mtbl";
+  const months=[...new Set(L.map(x=>mk(x.hoto)).filter(Boolean))].sort();
+  const box=(arr,lbl,subs)=>{const n=arr.length;const num=n?`<span class="mc-n" onclick='drillSet(${JSON.stringify(arr.map(a=>a.id))},"${lbl.replace(/"/g,"")}")'>${n}</span>`:`<span class="mc-n z">0</span>`;
+    const sub=subs&&n?`<div class="mc-subs">${subs.map(s=>s.arr.length?`<span class="mc-sub ${s.cls}" onclick='drillSet(${JSON.stringify(s.arr.map(a=>a.id))},"${(lbl+" "+s.label).replace(/"/g,"")}")'>${s.label} ${s.arr.length}</span>`:"").join("")}</div>`:"";
+    return `<div class="mc">${num}${sub}</div>`;};
+  const devTarget=x=>SLA.first[x.cat]?SLA.first[x.cat].dev:0;
+  let body=months.map(m=>{
+    const leads=L.filter(x=>mk(x.hoto)===m);
+    const devReq=leads.filter(x=>x.devReq==="Yes");
+    const devDone=devReq.filter(x=>x.dev&&x.dev.finalStatus==="Completed");
+    const devOn=devDone.filter(x=>{const t=devTarget(x);return t&&x.dev.devTat!=null&&x.dev.devTat<=t;});
+    const devDl=devDone.filter(x=>{const t=devTarget(x);return t&&x.dev.devTat!=null&&x.dev.devTat>t;});
+    const devPend=devReq.filter(x=>!(x.dev&&["Completed","Cancelled"].includes(x.dev.finalStatus)));
+    const dsnExp=leads.filter(x=>x.devReq!=="Yes"||(x.dev&&x.dev.finalStatus==="Completed"));
+    const dsnDone=dsnExp.filter(x=>x.design.status==="Completed");
+    const dsnOn=dsnDone.filter(x=>x.design.slaState==="On time");
+    const dsnDl=dsnDone.filter(x=>x.design.slaState==="Delayed");
+    const dsnPend=dsnExp.filter(x=>x.design.status==="Pending");
+    return `<tr><td class="ml"><b>${monthLbl(m)}</b></td>
+      <td>${box(leads,monthLbl(m)+" leads")}</td>
+      <td>${box(devReq,monthLbl(m)+" DEV to-be")}</td>
+      <td>${box(devDone,monthLbl(m)+" DEV completed",[{label:"On",arr:devOn,cls:"on"},{label:"Dly",arr:devDl,cls:"dl"}])}</td>
+      <td>${box(devPend,monthLbl(m)+" DEV pending")}</td>
+      <td>${box(dsnExp,monthLbl(m)+" design expected")}</td>
+      <td>${box(dsnDone,monthLbl(m)+" design completed",[{label:"On",arr:dsnOn,cls:"on"},{label:"Dly",arr:dsnDl,cls:"dl"}])}</td>
+      <td>${box(dsnPend,monthLbl(m)+" design pending")}</td></tr>`;
+  }).join("");
+  $("#monthlyTbl").innerHTML=`<thead>
+    <tr><th rowspan="2" class="ml" style="text-align:left">HOTO month</th><th rowspan="2" class="grp-tot">Total leads</th><th colspan="3" class="grp-dev">DEV</th><th colspan="3" class="grp-dsn">DESIGN</th></tr>
+    <tr><th class="grp-dev">To be required</th><th class="grp-dev">Completed (on/dly)</th><th class="grp-dev">Pending</th><th class="grp-dsn">Expected</th><th class="grp-dsn">Completed (on/dly)</th><th class="grp-dsn">Pending</th></tr>
+   </thead><tbody>${body||`<tr><td colspan="8" style="padding:24px" class="muted">No data — Refresh the tab.</td></tr>`}</tbody>`;
 }
 function renderDesignerSummary(){
   const L=filtered();
@@ -548,17 +594,6 @@ function renderFunnel(){
   const devCanc=req.filter(x=>x.dev&&x.dev.finalStatus==="Cancelled");
   const nrDone=notReq.filter(x=>x.design.status==="Completed");
   const nrPend=notReq.filter(x=>x.design.status==="Pending");
-  const w=p=>Math.max(16,p/Math.max(total,1)*100);
-  const seg=(cls,arr,lbl,col)=>`<div class="mini" style="background:${col}" onclick='drillSet(${JSON.stringify(arr.map(a=>a.id))},"${lbl}")'><b>${arr.length}</b><span>${lbl}</span></div>`;
-  $("#funnel").innerHTML=`
-   <div class="funnel">
-     <div class="fn"><div class="fn-side">Total leads</div><div class="fn-bar" style="width:100%;background:var(--ink)" onclick='drillSet(${JSON.stringify(L.map(a=>a.id))},"All leads")'><b>${total}</b><span>unique leads received</span></div></div>
-     <div class="fn"><div class="fn-side">DEV required?</div>
-       <div class="b2" style="flex:1">
-         ${seg('','',`Required`,'var(--solar)').replace('></div>','>').replace(/onclick='[^']*'/,`onclick='drillSet(${JSON.stringify(req.map(a=>a.id))},"DEV required")'`)}<b style="display:none"></b>
-       </div></div>
-   </div>`;
-  // simpler explicit layout:
   $("#funnel").innerHTML=`
    <div class="funnel">
      <div class="fn"><div class="fn-side">Total leads</div>
@@ -585,8 +620,23 @@ function renderFunnel(){
        </div></div>
    </div>`;
 }
-
-/* ====== DRILL POPUPS ====== */
+function renderLeadBreak(){
+  const L=filtered();const total=L.length;
+  const rows=[
+    ["Total unique leads",L,"var(--ink)"],
+    ["DEV required",L.filter(x=>x.devReq==="Yes"),"var(--solar)"],
+    ["DEV not required",L.filter(x=>x.devReq==="No"),"var(--teal)"],
+    ["DEV not updated",L.filter(x=>x.devReq===""),"#94A3B8"],
+    ["Re-visit required (>1 DEV)",L.filter(x=>(x.devAll||[]).length>1),"var(--amber)"],
+    ["Revision done (≥1)",L.filter(x=>(x.design.revisions||0)>0),"var(--blue)"],
+    ["Reached Revision 1",L.filter(x=>(x.design.revisions||0)>=1),"var(--blue)"],
+    ["Reached Revision 2",L.filter(x=>(x.design.revisions||0)>=2),"var(--blue)"],
+    ["Reached Revision 3+",L.filter(x=>(x.design.revisions||0)>=3),"var(--blue)"],
+  ];
+  $("#leadBreakTbl").innerHTML=`<thead><tr><th>Metric</th><th>Count</th><th>% of total</th></tr></thead><tbody>`+
+   rows.map(([lbl,arr,col])=>{const n=arr.length;const pct=total?Math.round(n/total*1000)/10:0;
+     return `<tr><td><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:${col};margin-right:8px"></span>${lbl}</td><td style="text-align:center"><span class="mc-n" onclick='drillSet(${JSON.stringify(arr.map(a=>a.id))},"${lbl.replace(/"/g,"")}")'>${n}</span></td><td class="mono" style="font-weight:600;color:${pct>=15?'var(--green)':pct>=5?'var(--amber)':'var(--txt-2)'}">${pct}%</td></tr>`;}).join("")+`</tbody>`;
+}
 function leadsByIds(ids){return DATA.leads.filter(l=>ids.includes(l.id));}
 function drillTable(leads){
   return `<div class="tbl-wrap"><table><thead><tr><th>Project</th><th>City</th><th>Size</th><th>HOTO</th><th>DEV</th><th>Designer</th><th>Design</th><th>TAT</th></tr></thead><tbody>`+
@@ -739,18 +789,61 @@ function renderProjects(){const q=($("#projSearch").value||"").toLowerCase();
   if(!L.length)$("#projTbl").innerHTML+=`<tbody><tr><td colspan="11" style="text-align:center;padding:30px" class="muted">No projects match.</td></tr></tbody>`;}
 
 /* ====== TEAM ====== */
-function renderTeam(){const users=DATA.users||[];const devs=users.filter(u=>u.role==="DEV"),designers=users.filter(u=>u.role!=="DEV");
-  const devLoad={},dsnLoad={};DATA.leads.forEach(L=>{if(L.dev&&L.dev.devName)devLoad[L.dev.devName]=(devLoad[L.dev.devName]||0)+1;const n=L.design.assignedTo;if(n)dsnLoad[n]=(dsnLoad[n]||0)+1;});
-  const att=Object.fromEntries(DATA.attendance.map(a=>[a.name,a]));
-  const present=devs.filter(d=>att[d.name]&&att[d.name].present==="Present").length;
-  const idle=designers.filter(d=>!(dsnLoad[d.name]>0)).length+devs.filter(d=>!(devLoad[d.name]>0)).length;
-  $("#teamKpis").innerHTML=kpi("Total users",users.length,`${devs.length} DEV · ${designers.length} designers`,"var(--solar)")+kpi("DEVs present",present,`of ${devs.length}`,"var(--green)")+kpi("Idle",idle,"0 assigned","var(--blue)")+kpi("Open DEV tasks",Object.values(devLoad).reduce((a,b)=>a+b,0),"","var(--amber)");
+function designerStats(){
+  const S={};const get=n=>S[n]||(S[n]={name:n,type:null,dA:0,rA:0,dC:0,rC:0,cap:0,aIds:new Set(),cIds:new Set()});
+  DATA.leads.forEach(L=>(L.designAll||[]).forEach((v,i)=>{
+    const n=v.designer;if(!n||n==="—")return;const s=get(n);if(!s.type)s.type=v.type||"Internal";
+    const isRev=i>0;if(isRev)s.rA++;else s.dA++;s.aIds.add(L.id);
+    if(v.status==="Completed"){if(isRev)s.rC++;else s.dC++;s.cap+=(v.cap||0);s.cIds.add(L.id);}
+  }));
+  (DATA.users||[]).filter(u=>u.role==="DE"||u.role==="ODE").forEach(u=>{const s=get(u.name);if(!s.type)s.type=u.role==="ODE"?"External":"Internal";});
+  return S;
+}
+function renderTeam(){
+  const users=DATA.users||[];const devs=users.filter(u=>u.role==="DEV");
+  const S=designerStats();const all=Object.values(S);
+  const internal=all.filter(s=>s.type==="Internal").sort((a,b)=>(b.dA+b.rA)-(a.dA+a.rA));
+  const external=all.filter(s=>s.type==="External").sort((a,b)=>(b.dA+b.rA)-(a.dA+a.rA));
+  const dsnDoneTotal=all.reduce((a,s)=>a+s.dC+s.rC,0);
+  $("#teamKpis").innerHTML=kpi("Designers",all.length,`${internal.length} internal · ${external.length} external`,"var(--solar)")
+    +kpi("DEVs",devs.length,"field engineers","var(--blue)")
+    +kpi("Designs completed",dsnDoneTotal,"design + revision","var(--green)")
+    +kpi("Idle designers",all.filter(s=>(s.dA+s.rA)===0).length,"0 assigned","var(--amber)");
+  const bcell=(t,d,r)=>`<div class="mc-subs" style="justify-content:center"><span class="mc-sub" style="background:#E7ECF2;color:var(--ink)">T ${t}</span><span class="mc-sub on">D ${d}</span><span class="mc-sub" style="background:var(--blue-l);color:#1D4FAB">R ${r}</span></div>`;
+  const tbl=list=>{
+    let tot={aA:0,aD:0,aR:0,cA:0,cD:0,cR:0,cap:0,pend:0};
+    const rows=list.map(s=>{const aTot=s.dA+s.rA,cTot=s.dC+s.rC,pend=aTot-cTot,pct=aTot?Math.round(cTot/aTot*100):0;
+      tot.aD+=s.dA;tot.aR+=s.rA;tot.cD+=s.dC;tot.cR+=s.rC;tot.cap+=s.cap;tot.pend+=pend;
+      return `<tr><td class="ml"><a class="link" onclick='openDesignerDetail(${JSON.stringify(s.name)})'>${s.name}</a></td>
+        <td>${bcell(aTot,s.dA,s.rA)}</td><td>${bcell(cTot,s.dC,s.rC)}</td>
+        <td class="mono">${s.cap?Math.round(s.cap)+" kWp":"—"}</td><td>${pend}</td>
+        <td><b style="color:${pct>=70?'var(--green)':pct>=40?'var(--amber)':'var(--red)'}">${pct}%</b></td></tr>`;}).join("");
+    const aTot=tot.aD+tot.aR,cTot=tot.cD+tot.cR;
+    return `<thead><tr><th class="ml" style="text-align:left">Designer</th><th>Assigned (T/D/R)</th><th>Completed (T/D/R)</th><th>Capacity</th><th>Pending</th><th>%</th></tr></thead><tbody>${rows||`<tr><td colspan="6" class="muted" style="padding:20px;text-align:center">No designers.</td></tr>`}</tbody>
+      <tfoot><tr style="font-weight:700;background:#F7F9FB"><td class="ml">Grand total</td><td>${bcell(aTot,tot.aD,tot.aR)}</td><td>${bcell(cTot,tot.cD,tot.cR)}</td><td class="mono">${tot.cap?Math.round(tot.cap)+" kWp":"—"}</td><td>${tot.pend}</td><td>${aTot?Math.round(cTot/aTot*100):0}%</td></tr></tfoot>`;
+  };
+  $("#intTbl").className="mtbl";$("#extTbl").className="mtbl";
+  $("#intTbl").innerHTML=tbl(internal);
+  $("#extTbl").innerHTML=tbl(external);
+  // DEV availability
+  const att=Object.fromEntries((DATA.attendance||[]).map(a=>[a.name,a]));
+  const devLoad={};DATA.leads.forEach(L=>{if(L.dev&&L.dev.devName)devLoad[L.dev.devName]=(devLoad[L.dev.devName]||0)+1;});
   $("#attTbl").innerHTML=`<thead><tr><th>DEV</th><th>Attendance</th><th>Availability</th><th>Assigned</th></tr></thead><tbody>`+
-   devs.map(d=>{const a=att[d.name]||{},n=devLoad[d.name]||0;const pres=a.present==="Present"?'<span class="pill p-green"><span class="d"></span>Present</span>':a.present==="Leave"?'<span class="pill p-red"><span class="d"></span>Leave</span>':'<span class="pill p-gray"><span class="d"></span>—</span>';const av=a.avail||"—";
-     return `<tr><td><b>${d.name}</b><br><span class="mono muted" style="font-size:10px">${d.id} · ${d.city}</span></td><td>${pres}</td><td><span class="pill ${av==='Available'?'p-green':av==='On site'?'p-blue':'p-gray'}"><span class="d"></span>${av}</span></td><td>${n>0?n:'<span class="muted">idle</span>'}</td></tr>`;}).join("")+`</tbody>`;
-  const mx=Math.max(1,...designers.map(d=>dsnLoad[d.name]||0));
-  $("#dsnLoad").innerHTML=designers.sort((a,b)=>(dsnLoad[b.name]||0)-(dsnLoad[a.name]||0)).map(d=>{const n=dsnLoad[d.name]||0,w=mx?Math.max(4,n/mx*100):0;
-    return `<div class="bar-row" style="grid-template-columns:200px 1fr 46px"><span style="font-size:12px">${d.name} <span class="cat ${d.role==='DE'?'cat-Alpha':'cat-Beta'}" style="font-size:9px;padding:1px 5px">${d.role==='DE'?'Int':'Ext'}</span></span><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${d.role==='DE'?'var(--blue)':'var(--teal)'}">${n}</div></div><span class="muted">${n===0?'idle':''}</span></div>`;}).join("");}
+   (devs.length?devs.map(d=>{const a=att[d.name]||{},n=devLoad[d.name]||0;const pres=a.present==="Present"?'<span class="pill p-green"><span class="d"></span>Present</span>':a.present==="Leave"?'<span class="pill p-red"><span class="d"></span>Leave</span>':'<span class="pill p-gray"><span class="d"></span>—</span>';const av=a.avail||"—";
+     return `<tr><td><b>${d.name}</b><br><span class="mono muted" style="font-size:10px">${d.id} · ${d.city}</span></td><td>${pres}</td><td><span class="pill ${av==='Available'?'p-green':av==='On site'?'p-blue':'p-gray'}"><span class="d"></span>${av}</span></td><td>${n>0?n:'<span class="muted">idle</span>'}</td></tr>`;}).join("")
+     :`<tr><td colspan="4" class="muted" style="padding:20px;text-align:center">No DEV roster.</td></tr>`)+`</tbody>`;
+}
+function openDesignerDetail(name){
+  const map={};const aIds={},cIds={};
+  DATA.leads.forEach(L=>(L.designAll||[]).forEach(v=>{if(v.designer!==name)return;
+    const am=monthKey(v.assigned);if(am){(map[am]=map[am]||{a:0,c:0}).a++;(aIds[am]=aIds[am]||new Set()).add(L.id);}
+    if(v.status==="Completed"){const cm=monthKey(v.completed);if(cm){(map[cm]=map[cm]||{a:0,c:0}).c++;(cIds[cm]=cIds[cm]||new Set()).add(L.id);}}}));
+  const months=Object.keys(map).sort();
+  const body=`<div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">Month</th><th>Assigned</th><th>Completed</th></tr></thead><tbody>`+
+   (months.length?months.map(m=>`<tr><td class="ml"><b>${monthLbl(m)}</b></td><td>${map[m].a?`<span class="mc-n" onclick='drillSet(${JSON.stringify([...(aIds[m]||[])])},"${name} assigned ${monthLbl(m)}")'>${map[m].a}</span>`:'<span class="mc-n z">0</span>'}</td><td>${map[m].c?`<span class="mc-n" onclick='drillSet(${JSON.stringify([...(cIds[m]||[])])},"${name} completed ${monthLbl(m)}")'>${map[m].c}</span>`:'<span class="mc-n z">0</span>'}</td></tr>`).join("")
+     :`<tr><td colspan="3" class="muted" style="padding:20px;text-align:center">No design records.</td></tr>`)+`</tbody></table></div>`;
+  showModal("Designer — "+name,"by assigned month · by completed month",body);
+}
 
 /* ====== lead journey modal (with DEV / Design detail tabs) ====== */
 function jrDevCard(L,d){
@@ -765,13 +858,12 @@ function jrDsnCard(L,d){
     <div class="jr-strip"><span>📅 Assigned: <b>${d.assigned||"—"}</b></span><span>✅ Completed: <b>${d.completed||"—"}</b></span><span>⏱ Net TAT: <b>${d.tat==null?"—":d.tat+"d"}</b>${d.holdDays?` <span class="muted">(−${d.holdDays}d hold)</span>`:""}</span>${d.target?`<span>🎯 Target: <b>${d.target}d</b>${sla}</span>`:`<span>${sla}</span>`}</div>${note}</div>`;
 }
 function renderJourney(L){
-  const evs=[];
-  (L.devAll||[]).forEach(d=>evs.push({date:d.completed||d.permission||L.hoto||"",order:0,html:jrDevCard(L,d)}));
-  (L.designAll||[]).forEach(d=>evs.push({date:d.completed||d.assigned||L.hoto||"",order:1,html:jrDsnCard(L,d)}));
-  evs.sort((a,b)=>String(a.date).localeCompare(String(b.date))||a.order-b.order);
-  const recv=`<div class="jrcard recv"><div class="jr-top"><div class="jr-title">🏁 Lead received / HOTO</div><span class="pill p-gray"><span class="d"></span>${L.cat} · ${L.capacity}kWp</span></div><div class="jr-strip"><span>📍 ${L.city}${L.addr?" · "+L.addr:""}</span><span>📅 HOTO: <b>${L.hoto||"—"}</b></span><span>DEV required: <b>${L.devReq==="Yes"?"Yes":L.devReq==="No"?"No":"not updated"}</b></span></div></div>`;
-  const body=evs.length?evs.map((e,i)=>(i?`<div class="jr-arrow">↓</div>`:"")+e.html).join(""):'<div class="muted">No DEV or design records yet.</div>';
-  return recv+`<div class="jr-arrow">↓</div>`+body;
+  const items=[{type:"recv",date:L.hoto||"",t:"Lead received / HOTO",m:`${L.city||""}${L.addr?" · "+L.addr:""} · HOTO ${L.hoto||"—"} · DEV ${L.devReq==="Yes"?"required":L.devReq==="No"?"not required":"not updated"}`}];
+  (L.devAll||[]).forEach(d=>items.push({type:"dev",date:d.completed||d.permission||L.hoto||"",t:`${d.rev||"DEV"} — ${d.devName||"—"} · ${d.status}`,m:`permission ${d.permission||"—"} → completed ${d.completed||"—"} · net TAT ${d.tat==null?"—":d.tat+"d"}${d.reschedules?" · "+d.reschedules+" reschedule(s)":""}${d.distKm!=null?` · ${d.distKm}km ${d.onsite?"on-site":"off-site"}`:""}`}));
+  (L.designAll||[]).forEach(d=>items.push({type:"dsn",date:d.completed||d.assigned||L.hoto||"",t:`Design ${d.rev||""} — ${d.designer||"—"} (${d.type||""}) · ${d.status}`,m:`assigned ${d.assigned||"—"} → completed ${d.completed||"—"} · net TAT ${d.tat==null?"—":d.tat+"d"}${d.holdDays?` (−${d.holdDays}d hold)`:""}${d.sla&&d.sla!=="—"?" · "+d.sla:""}${d.note?" · "+d.note:""}`}));
+  const rest=items.slice(1).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const all=[items[0],...rest];
+  return `<div class="tl">`+all.map(i=>`<div class="tl-it ${i.type==="dev"?"jdev":i.type==="dsn"?"jdsn":""}"><div class="t">${i.t}</div><div class="m">${i.m}</div></div>`).join("")+`</div>`;
 }
 function openLead(id,focus){const L=DATA.leads.find(x=>x.id===id);if(!L)return;
   $("#mTitle").textContent=L.project;$("#mSub").textContent=`${L.id} · ${L.city} · ${L.capacity}kWp · ${L.cat}`;
@@ -805,7 +897,7 @@ $("#calCtl").onclick=e=>{if(e.target.dataset.c){[...e.currentTarget.children].fo
 $("#projSearch").addEventListener("input",renderProjects);
 
 function renderAll(){
-  const steps=[["overview",renderOverview],["insights",renderInsights],["monthly",renderMonthly],["designerSummary",renderDesignerSummary],["funnel",renderFunnel],["dev",renderDev],["design",renderDesign],["pending",renderPending],["tat",renderTat],["cohort",renderCohort],["projects",renderProjects],["team",renderTeam]];
+  const steps=[["overview",renderOverview],["insights",renderInsights],["monthly",renderMonthly],["designerSummary",renderDesignerSummary],["funnel",renderFunnel],["leadBreak",renderLeadBreak],["dev",renderDev],["design",renderDesign],["pending",renderPending],["tat",renderTat],["cohort",renderCohort],["projects",renderProjects],["team",renderTeam]];
   steps.forEach(([n,fn])=>{try{fn();}catch(e){console.error("render["+n+"] failed:",e);}});
   if(map){try{drawMarkers();}catch(e){console.error("map failed:",e);}}
 }
@@ -918,7 +1010,7 @@ function buildLead(bid,rows,drows){
   return enrich({id:bid,project:pick(m0,"Project name"),city:pick(m0,"City"),addr:pick(m0,"Address")||pick(m0,"Location of project"),
     lat,lng,capacity:parseFloat(pick(m0,"Required DC capacity as per Bill"))||design.finalCap||0,
     devReq:required?"Yes":(reqRaw?"No":""),devStatus,
-    hoto:isoDate(pick(m0,"Hoto Time_stamp")),received:isoDate(pick(m0,"Hoto Time_stamp")),
+    hoto:isoDate(pick(m0,"Hoto Time_stamp")),received:isoDate(pick(m0,"Hoto Time_stamp")),capacityUpdated:isoDate(pick(m0,"Capacity Updated date")),
     dev,devHistory:devHistory.length?devHistory:undefined,
     design,designHistory:design._all&&design._all.length?design._all:undefined});}
 
@@ -950,9 +1042,9 @@ async function toggleConnect(){
     if(Array.isArray(users)&&users.length)DATA.users=users.map(u=>({id:pick(u,"User_ID"),name:pick(u,"User Name","Name"),role:(pick(u,"Access Type")||"").toUpperCase().includes("ODE")?"ODE":((pick(u,"Access Type")||"").toUpperCase().replace("DEV","").includes("DE")?"DE":"DEV"),city:pick(u,"City")}));
     if(Array.isArray(att)&&att.length)DATA.attendance=att.map(a=>({name:pick(a,"DEV Name"),present:/present/i.test(pick(a,"Present","Attendance Day status"))?"Present":(pick(a,"Leave")?"Leave":"—"),avail:pick(a,"Availablity")||"—"}));
     buildFilters();renderAll();
-    $("#connBtn").classList.add("live");$("#updstamp").textContent=`Live · ${leads.length} leads · ${D.length} design rows${skipped?` · ${skipped} skipped`:""}`;
+    $("#connBtn").classList.add("live");$("#updstamp").textContent=`Updated ${new Date().toLocaleString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})} · ${leads.length} leads · ${D.length} design rows${skipped?` · ${skipped} skipped`:""}`;
   }catch(e){
-    $("#updstamp").textContent="Couldn't load: "+e.message+" — using sample.";
+    $("#updstamp").textContent="Couldn't load — Refresh the tab. ("+e.message+")";
     console.error(e);
   }
 }
