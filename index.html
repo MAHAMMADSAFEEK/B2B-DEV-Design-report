@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
   --ink:#0E1B2A;--ink-2:#1C2E40;--bg:#EEF2F6;--surface:#FFF;--line:#E2E8F0;--line-2:#CBD5E1;
@@ -34,9 +35,10 @@ h1,h2,h3,h4{font-family:'Space Grotesk';font-weight:600;letter-spacing:-.01em}
 .tbtn:hover{background:rgba(255,255,255,.2)}
 .tbtn.live{background:#15633F;border-color:#1E8554}
 .conn{display:none}
-.tabs{background:var(--ink-2);padding:0 16px;display:flex;gap:1px;position:sticky;top:60px;z-index:1100;overflow-x:auto}
-.tab{color:#9FB3C8;padding:12px 14px 10px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap}
-.tab:hover{color:#D6E2EE}.tab.active{color:#fff;border-color:var(--solar)}
+.tabs{background:#F0F4F8;padding:11px 26px 0;display:flex;gap:6px;position:sticky;top:60px;z-index:1100;overflow-x:auto;border-bottom:1px solid var(--line)}
+.tab{color:var(--txt-2);padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;background:#fff;border:1px solid var(--line);border-bottom:none;border-radius:9px 9px 0 0;margin-bottom:-1px}
+.tab:hover{color:var(--ink);background:#F7FAFD}
+.tab.active{color:var(--blue);background:#fff;border-color:var(--line);box-shadow:0 -2px 0 var(--blue) inset}
 /* filter bar */
 .fbar{background:var(--surface);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;position:sticky;top:103px;z-index:1000}
 .fbar .ftitle{font-size:11.5px;font-weight:600;color:var(--txt-2);text-transform:uppercase;letter-spacing:.05em;margin-right:2px}
@@ -50,7 +52,7 @@ h1,h2,h3,h4{font-family:'Space Grotesk';font-weight:600;letter-spacing:-.01em}
 .ms-opt{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:13px}
 .ms-opt:hover{background:#F4F7FA}.ms-opt input{accent-color:var(--blue)}
 .fclear{font-size:12px;color:var(--blue);cursor:pointer;margin-left:auto}.fclear:hover{text-decoration:underline}
-.wrap{max-width:1760px;margin:0 auto;padding:20px 28px}
+.wrap{width:100%;max-width:none;margin:0;padding:20px 26px 60px}
 .view{display:none}.view.active{display:block;animation:f .3s}@keyframes f{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:13px;margin-bottom:20px}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:15px 17px;position:relative;overflow:hidden;cursor:pointer;transition:.15s}
@@ -60,6 +62,22 @@ h1,h2,h3,h4{font-family:'Space Grotesk';font-weight:600;letter-spacing:-.01em}
 .kpi .lbl{font-size:11px;color:var(--txt-2);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:7px;margin-top:3px}
 .det{font-size:11.5px;font-weight:600;color:var(--blue);background:var(--blue-l);padding:3px 9px;border-radius:20px;cursor:pointer}
 .det:hover{background:#D3E4FA}
+.charts-row{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:15px}
+.charts-row2{display:grid;grid-template-columns:1.45fr 1fr;gap:15px;margin-bottom:15px}
+.chart-wrap{position:relative;height:225px}
+.chart-wrap.tall{height:300px}
+.chartleg{display:flex;flex-wrap:wrap;gap:5px 12px;margin-top:12px;font-size:11.5px;justify-content:center}
+.chartleg .it{display:flex;align-items:center;gap:5px;color:var(--txt-2);cursor:pointer}
+.chartleg .sw{width:10px;height:10px;border-radius:3px}
+.cfunnel .row{margin-bottom:14px;cursor:pointer}
+.cfunnel .row:hover .ctrack{filter:brightness(.97)}
+.cfunnel .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--txt-2);margin-bottom:5px}
+.cfunnel .lab b{font-family:'Space Grotesk';font-size:22px;font-weight:700;color:var(--ink)}
+.cfunnel .ctrack{height:11px;background:#EEF2F6;border-radius:6px;overflow:hidden}
+.cfunnel .cfill{height:100%;border-radius:6px}
+.cfunnel .sub{font-size:11px;color:var(--txt-3);margin-top:4px}
+@media(max-width:1200px){.charts-row{grid-template-columns:1fr 1fr}}
+@media(max-width:880px){.charts-row,.charts-row2{grid-template-columns:1fr}}
 .kpi .val{font-family:'Space Grotesk';font-size:28px;font-weight:700;line-height:1}
 .kpi .val small{font-size:13px;color:var(--txt-2);font-weight:500}
 .kpi .sub{font-size:11.5px;color:var(--txt-3);margin-top:5px}
@@ -194,17 +212,19 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 <div class="wrap">
   <div class="view active" id="v-overview">
     <div class="kpis" id="ovKpis"></div>
+    <div class="charts-row">
+      <div class="panel"><div class="panel-h"><h3>DESIGN STATUS MIX</h3><span class="det" onclick="go('design')">Details ▸</span></div><div class="panel-b"><div class="chart-wrap"><canvas id="cDonut"></canvas></div><div class="chartleg" id="donutLeg"></div></div></div>
+      <div class="panel"><div class="panel-h"><h3>PROJECTS BY CATEGORY</h3><span class="det" onclick="go('tat')">Details ▸</span></div><div class="panel-b"><div class="chart-wrap"><canvas id="cCat"></canvas></div></div></div>
+      <div class="panel"><div class="panel-h"><h3>LEADS BY CITY</h3><span class="det" onclick="go('map')">Details ▸</span></div><div class="panel-b"><div class="chart-wrap"><canvas id="cCity"></canvas></div></div></div>
+      <div class="panel"><div class="panel-h"><h3>CONVERSION FUNNEL</h3><span class="det" onclick="go('funnel')">Details ▸</span></div><div class="panel-b cfunnel" id="convFunnel"></div></div>
+    </div>
+    <div class="charts-row2">
+      <div class="panel"><div class="panel-h"><h3>DESIGN &amp; DEV COMPLETED BY MONTH</h3><span class="det" onclick="go('cohort')">Details ▸</span></div><div class="panel-b"><div class="chart-wrap tall"><canvas id="cMonth"></canvas></div></div></div>
+      <div class="panel"><div class="panel-h"><h3>AGING — PENDING DESIGNS</h3><span class="det" onclick="go('pending')">Details ▸</span></div><div class="panel-b"><div class="chart-wrap tall"><canvas id="cAging"></canvas></div></div></div>
+    </div>
     <div class="panel" style="margin-bottom:15px"><div class="panel-h"><h3>Insights</h3><span class="hint">what's going well · what needs attention</span></div><div class="panel-b" id="insights"></div></div>
-    <div class="grid g-2">
-      <div class="panel"><div class="panel-h"><h3>By month</h3><span class="det" onclick="go('funnel')">Details ▸</span></div><div class="panel-b" id="byMonth"></div></div>
-      <div class="panel"><div class="panel-h"><h3>By HOTO month</h3><span class="det" onclick="go('cohort')">Details ▸</span></div><div class="panel-b" id="byHoto"></div></div>
-    </div>
-    <div class="grid g-2" style="margin-top:15px">
-      <div class="panel"><div class="panel-h"><h3>By city</h3><span class="det" onclick="go('map')">Details ▸</span></div><div class="panel-b" id="byCity"></div></div>
-      <div class="panel"><div class="panel-h"><h3>By category</h3><span class="det" onclick="go('tat')">Details ▸</span></div><div class="panel-b" id="byCat"></div></div>
-    </div>
-    <div class="panel" style="margin-top:15px"><div class="panel-h"><h3>Monthly summary</h3><span class="hint">assigned · completed · on-time — click any number</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="monthlyTbl"></table></div></div></div>
-    <div class="panel" style="margin-top:15px"><div class="panel-h"><h3>Designer summary</h3><span class="hint">total assigned · completed · on-time · avg net TAT — click any number</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="designerTbl"></table></div></div></div>
+    <div class="panel" style="margin-bottom:15px"><div class="panel-h"><h3>Monthly summary</h3><span class="hint">assigned · completed · on-time — click any number</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="monthlyTbl"></table></div></div></div>
+    <div class="panel"><div class="panel-h"><h3>Designer summary</h3><span class="hint">total assigned · completed · on-time · avg net TAT — click any number</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="designerTbl"></table></div></div></div>
   </div>
 
   <div class="view" id="v-funnel">
@@ -278,7 +298,7 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 /* ====== CONFIG ====== */
 const SHEET_ID="1g6vGbVMAaLKnJI06F-xKVskKcE862EelVC_CKSH7U6c";
 const GIDS={master:"1484820577",design:"392178120",attendance:"1387164875",checkinout:"854609223",users:"76549870"};
-const DEV_TAT_START="DEV Accepted timestamp"; // change to "Asssigned Time_Stamp" if you prefer
+var DEV_TAT_START="DEV Accepted timestamp"; // change to "Asssigned Time_Stamp" if you prefer
 const ONSITE_KM=0.5, TODAY=new Date("2026-06-26");
 const SLA={first:{Alpha:{dev:1,design:2},Beta:{dev:2,design:5},Gamma:{dev:3,design:8},Omega:{dev:0,design:0}},
            revision:{Alpha:{dev:1,design:3},Beta:{dev:1,design:6},Gamma:{dev:2,design:9},Omega:{dev:0,design:0}}};
@@ -388,6 +408,11 @@ function statusPill(s){const m={Completed:"p-green",Rescheduled:"p-amber",Cancel
 function avgOf(arr){return arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1):"—";}
 
 /* ====== OVERVIEW ====== */
+let CH={};
+function mkChart(id,cfg){if(CH[id]){CH[id].destroy();delete CH[id];}const el=document.getElementById(id);if(!el||typeof Chart==="undefined")return;CH[id]=new Chart(el,cfg);}
+const valLabels={id:"vl",afterDatasetsDraw(c){const{ctx}=c;const horiz=c.options.indexAxis==="y";ctx.save();ctx.fillStyle="#1A2433";ctx.font="600 11px Inter";c.data.datasets.forEach((ds,di)=>{c.getDatasetMeta(di).data.forEach((el,i)=>{const v=ds.data[i];if(v==null||v===0)return;if(horiz){ctx.textAlign="left";ctx.textBaseline="middle";ctx.fillText(v,el.x+6,el.y);}else{ctx.textAlign="center";ctx.textBaseline="bottom";ctx.fillText(v,el.x,el.y-4);}});});ctx.restore();}};
+const NOGRID={grid:{display:false},border:{display:false}},NOLEG={legend:{display:false}};
+
 function renderOverview(){
   const L=filtered();
   const devDone=L.filter(x=>x.dev&&x.dev.finalStatus==="Completed").length;
@@ -399,29 +424,51 @@ function renderOverview(){
     kpi("DEV completed",devDone,`avg TAT ${avgOf(devTats)} d`,"var(--blue)",`drill('city','DEV completed','devDone')`)+
     kpi("Design completed",dsnDone,`avg TAT ${avgOf(dsnTats)} d`,"var(--green)",`drill('city','Design completed','dsnDone')`)+
     kpi("Design pending",L.filter(x=>x.design.status==="Pending").length,"open","var(--amber)",`go('pending')`);
-  // by month (received)
-  const mk=k=>monthKey(k);
-  const months=[...new Set(L.map(x=>mk(x.hoto)).filter(Boolean))].sort();
-  const grpM=m=>({lead:L.filter(x=>mk(x.received)===m).length,dev:L.filter(x=>mk(x.dev?.completedDate)===m).length,dsn:L.filter(x=>mk(x.design.completed)===m).length});
-  const allMonths=[...new Set(L.flatMap(x=>[mk(x.received),mk(x.dev?.completedDate),mk(x.design.completed)]).filter(Boolean))].sort();
-  let mx=1;allMonths.forEach(m=>{const g=grpM(m);mx=Math.max(mx,g.lead,g.dev,g.dsn);});
-  $("#byMonth").innerHTML=allMonths.map(m=>{const g=grpM(m);
-    return `<div style="margin-bottom:13px"><div style="font-size:12px;font-weight:600;margin-bottom:5px">${monthLbl(m)}</div>
-      ${barRow("Leads",g.lead,mx,"var(--solar)",`drillMonth('${m}','received')`)}
-      ${barRow("DEV done",g.dev,mx,"var(--blue)",`drillMonth('${m}','dev')`)}
-      ${barRow("Design done",g.dsn,mx,"var(--green)",`drillMonth('${m}','dsn')`)}</div>`;}).join("")||'<div class="muted">No data.</div>';
-  // by HOTO month
-  const hmx=Math.max(1,...months.map(m=>L.filter(x=>mk(x.hoto)===m).length));
-  $("#byHoto").innerHTML=months.map(m=>barRow(monthLbl(m),L.filter(x=>mk(x.hoto)===m).length,hmx,"var(--teal)",`drillHoto('${m}')`)).join("")||'<div class="muted">No data.</div>';
-  // by city
-  const cities=[...new Set(L.map(x=>x.city))];
-  const cmx=Math.max(1,...cities.map(c=>L.filter(x=>x.city===c).length));
-  $("#byCity").innerHTML=cities.map(c=>barRow(c,L.filter(x=>x.city===c).length,cmx,"var(--blue)",`drillCity('${c}')`)).join("");
-  // by cat
-  const cats=["Alpha","Beta","Gamma","Omega"];const ccol={Alpha:"var(--alpha)",Beta:"var(--beta)",Gamma:"var(--gamma)",Omega:"var(--omega)"};
-  const catmx=Math.max(1,...cats.map(c=>L.filter(x=>x.cat===c).length));
-  $("#byCat").innerHTML=cats.map(c=>barRow(c,L.filter(x=>x.cat===c).length,catmx,ccol[c],`drillCat('${c}')`)).join("");
+  renderCharts(L);
 }
+function renderCharts(L){
+  // 1) donut: design status mix
+  const sc={Completed:0,Pending:0,Cancelled:0};L.forEach(x=>sc[x.design.status]=(sc[x.design.status]||0)+1);
+  const dParts=[["Completed","#16A34A",sc.Completed],["Pending","#F5A623",sc.Pending],["Cancelled","#DC2626",sc.Cancelled]].filter(p=>p[2]>0);
+  mkChart("cDonut",{type:"doughnut",data:{labels:dParts.map(p=>p[0]),datasets:[{data:dParts.map(p=>p[2]),backgroundColor:dParts.map(p=>p[1]),borderColor:"#fff",borderWidth:2}]},
+    options:{cutout:"60%",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${c.raw}`}}}}});
+  $("#donutLeg").innerHTML=dParts.map(([l,c,v])=>`<span class="it" onclick='filterTo("dsnStatus","${l}")'><span class="sw" style="background:${c}"></span>${l} (${v})</span>`).join("");
+  // 2) category bar
+  const cats=["Alpha","Beta","Gamma","Omega"];const ccol={Alpha:"#2563C9",Beta:"#0E9488",Gamma:"#D97706",Omega:"#9333EA"};
+  mkChart("cCat",{type:"bar",data:{labels:cats,datasets:[{data:cats.map(c=>L.filter(x=>x.cat===c).length),backgroundColor:cats.map(c=>ccol[c]),borderRadius:6,maxBarThickness:54}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:NOLEG,onClick:(e,el)=>{if(el[0])drillCat(cats[el[0].index]);},scales:{x:NOGRID,y:{beginAtZero:true,grid:{color:"#EEF2F6"},border:{display:false},ticks:{precision:0}}}},plugins:[valLabels]});
+  // 3) city horizontal bar
+  const cities=[...new Set(L.map(x=>x.city))].map(c=>[c,L.filter(x=>x.city===c).length]).sort((a,b)=>b[1]-a[1]);
+  mkChart("cCity",{type:"bar",data:{labels:cities.map(c=>c[0]),datasets:[{data:cities.map(c=>c[1]),backgroundColor:"#3B82F6",borderRadius:5,maxBarThickness:22}]},
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:NOLEG,onClick:(e,el)=>{if(el[0])drillCity(cities[el[0].index][0]);},scales:{x:{beginAtZero:true,grid:{color:"#EEF2F6"},border:{display:false},ticks:{precision:0}},y:NOGRID}},plugins:[valLabels]});
+  // 4) conversion funnel
+  const total=L.length;
+  const devReq=L.filter(x=>x.devReqState==="Required");
+  const devC=devReq.filter(x=>x.dev&&x.dev.finalStatus==="Completed");
+  const dsnC=L.filter(x=>x.design.status==="Completed");
+  const onT=dsnC.filter(x=>x.design.slaState==="On time");
+  const frow=(lbl,arr,col,prevN)=>{const n=arr.length;const pct=total?Math.round(n/total*1000)/10:0;const fromPrev=prevN?Math.round(n/prevN*100):100;
+    return `<div class="row" onclick='drillSet(${JSON.stringify(arr.map(a=>a.id))},"${lbl}")'><div class="lab"><span>${lbl}</span><b>${n.toLocaleString()}</b></div><div class="ctrack"><div class="cfill" style="width:${Math.max(2,pct)}%;background:${col}"></div></div><div class="sub">${pct}% of leads${prevN!=null?` · ${fromPrev}% from prev`:""}</div></div>`;};
+  $("#convFunnel").innerHTML=frow("Total unique leads",L,"#2563C9",null)+frow("DEV completed",devC,"#0E9488",total)+frow("Design completed",dsnC,"#16A34A",total)+frow("On-time (SLA)",onT,"#0E1B2A",dsnC.length);
+  // 5) design & dev completed by month
+  const mk=k=>monthKey(k);
+  const months=[...new Set(L.flatMap(x=>[mk(x.dev?.completedDate),mk(x.design.completed)]).filter(Boolean))].sort();
+  mkChart("cMonth",{type:"bar",data:{labels:months.map(monthLbl),datasets:[
+      {label:"Design completed",data:months.map(m=>L.filter(x=>mk(x.design.completed)===m).length),backgroundColor:"#16A34A",borderRadius:5,maxBarThickness:26},
+      {label:"DEV completed",data:months.map(m=>L.filter(x=>mk(x.dev?.completedDate)===m).length),backgroundColor:"#0E1B2A",borderRadius:5,maxBarThickness:26}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top",labels:{boxWidth:12,font:{size:11}}}},onClick:(e,el)=>{if(el[0])drillMonth(months[el[0].index],el[0].datasetIndex===0?"dsn":"dev");},scales:{x:NOGRID,y:{beginAtZero:true,grid:{color:"#EEF2F6"},border:{display:false},ticks:{precision:0}}}},plugins:[valLabels]});
+  // 6) aging — pending designs
+  const buckets=[["0–3 d",0,3,"#16A34A"],["4–7 d",4,7,"#84A93B"],["8–14 d",8,14,"#D97706"],["15–30 d",15,30,"#C2410C"],["30+ d",31,9999,"#DC2626"]];
+  const P=L.filter(x=>x.design.status==="Pending");
+  mkChart("cAging",{type:"bar",data:{labels:buckets.map(b=>b[0]),datasets:[{data:buckets.map(b=>P.filter(x=>x.design.ageDays>=b[1]&&x.design.ageDays<=b[2]).length),backgroundColor:buckets.map(b=>b[3]),borderRadius:6,maxBarThickness:54}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:NOLEG,scales:{x:NOGRID,y:{beginAtZero:true,grid:{color:"#EEF2F6"},border:{display:false},ticks:{precision:0}}}},plugins:[valLabels]});
+}
+function filterTo(key,val){
+  const ms=[...document.querySelectorAll(".ms")].find(m=>m.querySelector(`.ms-btn[data-k="${key}"]`));
+  if(ms){const cb=ms.querySelector(`.ms-opts input[value="${val}"]`);if(cb)cb.checked=true;
+    FILTERS[key]=[...ms.querySelectorAll(".ms-opts input:checked")].map(i=>i.value);
+    const c=ms.querySelector(".cnt");c.style.display=FILTERS[key].length?"inline-block":"none";c.textContent=FILTERS[key].length;}
+  renderAll();go("design");}
 
 /* ====== INSIGHTS + MONTHLY + DESIGNER SUMMARY ====== */
 function renderInsights(){
@@ -739,7 +786,6 @@ buildFilters();renderAll();
    pick() is fuzzy (case/space/punctuation-insensitive) so minor
    spelling drift still resolves.
    ============================================================ */
-const DEV_TAT_START_DOC = ""; // (see DEV_TAT_START in config)
 async function fetchCsv(gid){
   const urls=[`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}`,
               `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`];
