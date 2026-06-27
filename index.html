@@ -797,12 +797,32 @@ function agingTable(leads,ageFn,label){
    (noAge.length?`<tr><td class="ml muted">No date</td><td><span class="mc-n" onclick='drillSet(${JSON.stringify(noAge.map(a=>a.id))},"${label} no date")'>${noAge.length}</span></td><td class="mono muted">—</td></tr>`:"")+`</tbody></table></div>`;
 }
 function pendTab(w,btn){pendCur=w;if(btn){[...btn.parentNode.children].forEach(b=>b.classList.remove("on"));btn.classList.add("on");}renderPending();}
+function pendDetail(which){
+  const L=filtered();let leads,monthFn,title,mlbl;
+  if(which==="na"){leads=L.filter(x=>x.devReq==="");monthFn=x=>monthKey(x.hoto);title="Not updated";mlbl="HOTO month";}
+  else if(which==="dev"){leads=L.filter(x=>x.devReq==="Yes"&&x.dev&&!["Completed","Cancelled"].includes(x.dev.finalStatus));monthFn=x=>monthKey((x.dev&&x.dev.assignedOn))||monthKey(x.hoto);title="DEV pending";mlbl="DEV assigned month";}
+  else{leads=L.filter(x=>x.design.status==="Pending");monthFn=x=>monthKey(x.designStart)||monthKey(x.hoto);title="Design pending";mlbl="Design-start month";}
+  window._pendD={leads,monthFn,title,mlbl};
+  const body=`<div class="dtab" id="pendDtab"><button class="on" onclick="pendDetailDim('month',this)">Monthly (${mlbl})</button><button onclick="pendDetailDim('city',this)">City-wise</button></div><div id="pendDBody"></div>`;
+  showModal(title+" — breakdown",`${leads.length} pending`,body);pendDetailDim("month");
+}
+function pendDetailDim(dim,btn){
+  if(btn){[...btn.parentNode.children].forEach(b=>b.classList.remove("on"));btn.classList.add("on");}
+  const {leads,monthFn,title,mlbl}=window._pendD;const total=leads.length;
+  const keyFn=dim==="month"?monthFn:(x=>x.city||"—");
+  const grp={};leads.forEach(x=>{const k=keyFn(x)||"—";(grp[k]=grp[k]||[]).push(x);});
+  let entries=Object.entries(grp);
+  entries=dim==="month"?entries.sort((a,b)=>String(a[0]).localeCompare(String(b[0]))):entries.sort((a,b)=>b[1].length-a[1].length);
+  const head=dim==="month"?mlbl:"City";const disp=dim==="month"?(k=>k==="—"?"—":monthLbl(k)):(k=>k);
+  document.getElementById("pendDBody").innerHTML=`<div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">${head}</th><th>Pending</th><th>%</th></tr></thead><tbody>`+
+   entries.map(([k,arr])=>{const pct=total?Math.round(arr.length/total*100):0;return `<tr><td class="ml"><b>${disp(k)}</b></td><td><span class="mc-n" onclick='drillSet(${JSON.stringify(arr.map(a=>a.id))},"${(title+" "+disp(k)).replace(/"/g,"")}")'>${arr.length}</span></td><td class="mono" style="color:${pct>=25?'var(--red)':pct>=10?'var(--amber)':'var(--txt-2)'}">${pct}%</td></tr>`;}).join("")+`</tbody></table></div>`;
+}
 function renderPending(){
   const L=filtered();let html="";
   if(pendCur==="na"){
     const na=L.filter(x=>x.devReq==="");
     html=`<div class="kpis">${cardKpi("DEV status not updated",na,"P column blank — needs review","var(--red)")}${cardKpi("Total leads",L,"received","var(--ink)")}</div>`
-      +pendPanel("Ageing — not updated",agingTable(na,ageHoto,"Not updated"),"days since HOTO · click a bucket")
+      +pendPanel("Ageing — not updated",agingTable(na,ageHoto,"Not updated"),`days since HOTO · click a bucket · <span class="det" onclick="pendDetail('na')">Details ▸</span>`)
       +pendPanel("Leads — DEV status not updated",drillTable(na));
   }else if(pendCur==="dev"){
     const req=L.filter(x=>x.devReq==="Yes");
@@ -810,7 +830,7 @@ function renderPending(){
     const assigned=req.filter(x=>x.dev&&x.dev.devName&&!["Completed","Cancelled"].includes(x.dev.finalStatus));
     const pend=req.filter(x=>x.dev&&!["Completed","Cancelled"].includes(x.dev.finalStatus));
     html=`<div class="kpis">${cardKpi("Marked DEV required",req,"site-visit needed","var(--solar)")}${cardKpi("Not assigned to DEV",notAsg,"no DEV engineer","var(--red)")}${cardKpi("Assigned, awaiting visit",assigned,"DEV in progress","var(--amber)")}${cardKpi("DEV pending (total)",pend,"not yet completed","var(--red)")}</div>`
-      +pendPanel("Ageing — DEV pending",agingTable(pend,ageHoto,"DEV pending"),"days since HOTO · click a bucket")
+      +pendPanel("Ageing — DEV pending",agingTable(pend,ageHoto,"DEV pending"),`days since HOTO · click a bucket · <span class="det" onclick="pendDetail('dev')">Details ▸</span>`)
       +pendPanel("DEV pending — list",drillTable(pend));
   }else{
     const expected=L.filter(x=>x.devReq!=="Yes"||(x.dev&&x.dev.finalStatus==="Completed"));
@@ -819,7 +839,7 @@ function renderPending(){
     const revPend=L.filter(x=>x.design.pendKind==="Revision pending");
     const allPend=L.filter(x=>x.design.status==="Pending");
     html=`<div class="kpis">${cardKpi("Design assign pending",asgPend,"no designer yet","var(--red)")}${cardKpi("Design pending",dsnPend,"assigned, not completed","var(--amber)")}${cardKpi("Revision pending",revPend,"revision open","#6E59C7")}${cardKpi("All design pending",allPend,"total open","var(--ink)")}</div>`
-      +pendPanel("Ageing — design pending",agingTable(allPend,x=>x.design.ageDays,"Design pending"),"days since assigned (or HOTO if unassigned) · click a bucket")
+      +pendPanel("Ageing — design pending",agingTable(allPend,x=>x.design.ageDays,"Design pending"),`days since assigned (or HOTO if unassigned) · click a bucket · <span class="det" onclick="pendDetail('dsn')">Details ▸</span>`)
       +pendPanel("Design pending — list",drillTable(allPend));
   }
   $("#pendBody").innerHTML=html;
