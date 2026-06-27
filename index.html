@@ -1302,18 +1302,44 @@ function costTbl(store){const list=Object.values(store).sort((a,b)=>(b.dCost+b.r
   const totC=tot.dc+tot.rc;
   return `<thead><tr><th class="ml" style="text-align:left">Designer</th><th>Leads done</th><th>Designs</th><th>Revisions</th><th>Design cost</th><th>Revision cost</th><th>Total</th><th>₹/kW</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="muted" style="padding:18px;text-align:center">No data.</td></tr>'}</tbody><tfoot><tr style="font-weight:700;background:#F7F9FB"><td class="ml">Total</td><td>${tot.l}</td><td>${tot.d}</td><td>${tot.r}</td><td class="mono">${fmtMoney(tot.dc)}</td><td class="mono">${fmtMoney(tot.rc)}</td><td class="mono">${fmtMoney(totC)}</td><td class="mono">${tot.kw>0?fmtMoney(totC/tot.kw):"—"}</td></tr></tfoot>`;
 }
-function openCostDetail(name){
+const CAT_ORDER=["Alpha","Beta","Gamma","Omega"];
+function catOfCap(cap){return cap<=30?"Alpha":cap<=100?"Beta":cap<200?"Gamma":"Omega";}
+function catOfUnit(u){const L=DATA.leads.find(x=>x.id===u.leadId);return L?L.cat:catOfCap(u.cap);}
+function designerUnits(name){
   const L=filtered();const units=billableUnits(L).filter(u=>u.designer===name);
   const isExt=units.length?units[0].type==="External":false;
-  const M={};units.forEach(u=>{const r=M[u.month]=M[u.month]||{d:0,r:0,cost:0,kw:0,ids:new Set()};if(u.isRev)r.r++;else r.d++;r.ids.add(u.leadId);
-    if(u.billable){if(isExt)r.cost+=extCost(name,u.cap);else r.kw+=u.cap;}});
-  if(!isExt){const salary=internalRate(name);Object.values(M).forEach(r=>{r.cost=r.kw>0?salary:0;});}
-  const months=Object.keys(M).sort();
-  const sub=isExt?"external · flat bracket fee per design":`internal · monthly salary ${fmtMoney(internalRate(name))} allocated by capacity`;
-  const body=`<div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">Month</th><th>Designs</th><th>Revisions</th><th>Cost</th></tr></thead><tbody>`+
-   (months.length?months.map(k=>{const r=M[k];return `<tr><td class="ml"><b>${k==="—"?"—":monthLbl(k)}</b></td><td>${r.d}</td><td>${r.r}</td><td class="mono"><span class="mc-n" onclick='drillSet(${JSON.stringify([...r.ids])},"${name} ${k==="—"?"":monthLbl(k)}")'>${fmtMoney(r.cost)}</span></td></tr>`;}).join("")
-     :`<tr><td colspan="4" class="muted" style="padding:18px;text-align:center">No completed designs.</td></tr>`)+`</tbody></table></div>`;
-  showModal("Cost — "+name,sub,body);
+  if(isExt){units.forEach(u=>u.cost=u.billable?extCost(name,u.cap):0);}
+  else{const salary=internalRate(name);const byMonth={};units.forEach(u=>{if(u.billable)(byMonth[u.month]=byMonth[u.month]||{kw:0}).kw+=u.cap;});
+    units.forEach(u=>{const kw=(byMonth[u.month]||{}).kw||0;u.cost=(u.billable&&kw>0)?salary*u.cap/kw:0;});}
+  return {units,isExt};
+}
+function costProjTable(units){
+  return `<table class="mtbl"><thead><tr><th class="ml" style="text-align:left">Project</th><th>Size (kWp)</th><th>Category</th><th>Flag</th><th>Total cost</th><th>₹/kW</th></tr></thead><tbody>`+
+   (units.length?units.slice().sort((a,b)=>b.cost-a.cost).map(u=>{const L=DATA.leads.find(x=>x.id===u.leadId);const proj=L?L.project:u.leadId;const cat=catOfUnit(u);const perkw=u.cap>0?u.cost/u.cap:0;
+     return `<tr><td class="ml"><a class="link" onclick='openLead(${JSON.stringify(u.leadId)})'>${proj}</a></td><td>${u.cap}</td><td><span class="cat cat-${cat}">${cat}</span></td><td>${u.isRev?'<span class="pill p-purple">Revision</span>':'<span class="pill p-green">Design</span>'}</td><td class="mono">${fmtMoney(u.cost)}</td><td class="mono">${perkw?fmtMoney(perkw):"—"}</td></tr>`;}).join("")
+     :`<tr><td colspan="6" class="muted" style="padding:18px;text-align:center">No designs.</td></tr>`)+`</tbody></table>`;
+}
+function openCostDetail(name){
+  const {units,isExt}=designerUnits(name);window._costD={name,units,isExt};
+  const sub=isExt?"external · flat bracket fee per design":`internal · salary ${fmtMoney(internalRate(name))}/mo allocated by capacity (₹/kW)`;
+  const body=`<div class="dtab" id="costDtab"><button class="on" onclick="costDetailTab('month',this)">Monthly</button><button onclick="costDetailTab('size',this)">Size-wise</button><button onclick="costDetailTab('proj',this)">Projects</button></div><div id="costDBody"></div>`;
+  showModal("Cost — "+name,sub,body);costDetailTab("month");
+}
+function costDetailTab(tab,btn){
+  if(btn){[...btn.parentNode.children].forEach(b=>b.classList.remove("on"));btn.classList.add("on");}
+  else{const tb=document.getElementById("costDtab");if(tb){[...tb.children].forEach(b=>b.classList.remove("on"));const map={month:0,size:1,proj:2};if(tb.children[map[tab]])tb.children[map[tab]].classList.add("on");}}
+  const {units}=window._costD;const body=document.getElementById("costDBody");
+  if(tab==="proj"){body.innerHTML=`<div class="tbl-wrap">${costProjTable(units)}</div>`;return;}
+  const isMonth=tab==="month";
+  const grp={};units.forEach(u=>{const k=isMonth?u.month:catOfUnit(u);const g=grp[k]=grp[k]||{d:0,r:0,cost:0,kw:0};if(u.isRev)g.r++;else g.d++;g.cost+=u.cost;if(u.billable)g.kw+=u.cap;});
+  let keys=Object.keys(grp);keys=isMonth?keys.sort():keys.sort((a,b)=>CAT_ORDER.indexOf(a)-CAT_ORDER.indexOf(b));
+  const head=isMonth?"Month":"Size category";const disp=isMonth?(k=>k==="—"?"—":monthLbl(k)):(k=>k);
+  body.innerHTML=`<div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">${head}</th><th>Designs</th><th>Revisions</th><th>Cost</th><th>₹/kW</th></tr></thead><tbody>`+
+   keys.map(k=>{const g=grp[k];const perkw=g.kw>0?g.cost/g.kw:0;return `<tr style="cursor:pointer" onclick='costGroupProjects(${JSON.stringify(tab)},${JSON.stringify(k)})'><td class="ml"><b>${disp(k)}</b></td><td>${g.d}</td><td>${g.r}</td><td class="mono">${fmtMoney(g.cost)}</td><td class="mono">${perkw?fmtMoney(perkw):"—"}</td></tr>`;}).join("")+`</tbody></table></div><div class="muted" style="font-size:11px;margin-top:8px;padding:0 4px">Click a row to see its projects.</div>`;
+}
+function costGroupProjects(tab,key){const {units,name}=window._costD;const sub=units.filter(u=>(tab==="month"?u.month:catOfUnit(u))===key);
+  const lbl=tab==="month"?(key==="—"?"—":monthLbl(key)):key;
+  document.getElementById("costDBody").innerHTML=`<button class="minibtn" onclick='costDetailTab(${JSON.stringify(tab)})'>‹ back</button><h4 style="margin:10px 0 8px;font-size:13px">${name} · ${lbl}</h4><div class="tbl-wrap">${costProjTable(sub)}</div>`;
 }
 
 function renderAll(){
