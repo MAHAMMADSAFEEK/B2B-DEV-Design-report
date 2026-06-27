@@ -250,7 +250,7 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 <div class="login-bg" id="loginBg">
   <div class="login-card">
     <div class="login-logo"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2rP2rpzHaGVMqgjZvGiLuzn9jTxvUz2CAUA&s" onerror="this.style.display='none'"><div><b>SolarOps</b><span>DEV &amp; Design Tracker</span></div></div>
-    <div class="login-msg" id="loginMsg">Loading users…</div>
+    <div class="login-msg" id="loginMsg">Data is loading — please wait a few seconds…</div>
     <input id="loginEmail" type="email" placeholder="Email" autocomplete="username">
     <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     <button id="loginBtn" onclick="doLogin()">Sign in</button>
@@ -1237,12 +1237,17 @@ function roleOf(at){at=String(at||"").toLowerCase();
   if(/\bdev\b/.test(at))return"dev";
   if(/\bde\b|ode|design/.test(at))return"designer";
   return"viewer";}
-function loginReady(){$("#loginMsg").textContent=`${(DATA.usersFull||[]).length} users loaded · sign in with your email & password`;$("#loginBtn").disabled=false;}
+let DATA_READY=false, LOGIN_PENDING=false;
+function setLoginBtn(text,disabled){const b=$("#loginBtn");if(b){b.textContent=text;b.disabled=!!disabled;}}
+function loginReady(){DATA_READY=true;if(LOGIN_PENDING){doLogin();return;}$("#loginMsg").textContent="Enter your email & password to sign in.";setLoginBtn("Sign in",false);}
+function loginFailed(){DATA_READY=false;$("#loginMsg").textContent="Couldn't load data — please refresh the tab and try again.";if(LOGIN_PENDING){LOGIN_PENDING=false;setLoginBtn("Sign in",false);$("#loginErr").textContent="Data not loaded yet. Refresh and try again.";}}
 function doLogin(){
   const email=$("#loginEmail").value.trim().toLowerCase(),pass=$("#loginPass").value;
-  if(!email||!pass){$("#loginErr").textContent="Enter email and password.";return;}
+  if(!email||!pass){$("#loginErr").textContent="Enter your email and password.";return;}
+  if(!DATA_READY){LOGIN_PENDING=true;$("#loginErr").textContent="";$("#loginMsg").textContent="We are verifying your data — please wait a moment…";setLoginBtn("Verifying…",true);return;}
   const u=(DATA.usersFull||[]).find(x=>String(pick(x,"User_Email","User Email","Email")).trim().toLowerCase()===email&&String(pick(x,"Password"))===pass);
-  if(!u){$("#loginErr").textContent="Invalid email or password.";return;}
+  if(!u){LOGIN_PENDING=false;$("#loginErr").textContent="Invalid email or password.";$("#loginMsg").textContent="Enter your email & password to sign in.";setLoginBtn("Sign in",false);return;}
+  LOGIN_PENDING=false;
   CURRENT_USER={name:pick(u,"User Name","Name"),email,accessType:pick(u,"Access Type"),city:pick(u,"City")};
   ROLE=roleOf(CURRENT_USER.accessType);
   $("#loginErr").textContent="";$("#loginBg").classList.add("hide");
@@ -1515,7 +1520,7 @@ async function toggleConnect(){
     if(!CURRENT_USER)loginReady();
   }catch(e){
     $("#updstamp").textContent="Couldn't load — Refresh the tab. ("+e.message+")";
-    $("#loginMsg").textContent="Couldn't load users — check the sheet / Apps Script.";
+    loginFailed();
     console.error(e);
   }
 }
