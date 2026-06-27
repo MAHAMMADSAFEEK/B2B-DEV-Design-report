@@ -36,9 +36,9 @@ h1,h2,h3,h4{font-family:'Space Grotesk';font-weight:600;letter-spacing:-.01em}
 .tbtn.live{background:#15633F;border-color:#1E8554}
 .conn{display:none}
 .tabs{background:#EAF0F6;padding:10px 26px 0;display:flex;gap:6px;position:sticky;top:132px;z-index:1090;overflow-x:auto;border-bottom:1px solid var(--line)}
-.tab{color:var(--txt-2);padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;background:#fff;border:1px solid var(--line);border-bottom:none;border-radius:9px 9px 0 0;margin-bottom:-1px}
-.tab:hover{color:var(--ink);background:#F7FAFD}
-.tab.active{color:var(--blue);background:#fff;border-color:var(--line);box-shadow:0 -2px 0 var(--blue) inset}
+.tab{color:var(--tc,var(--txt-2));padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;background:var(--tcl,#fff);border:1px solid transparent;border-radius:9px 9px 0 0;margin-bottom:-1px;transition:.12s}
+.tab:hover{filter:brightness(.97)}
+.tab.active{color:#fff;background:var(--tc,var(--blue));box-shadow:0 2px 8px rgba(14,27,42,.18)}
 /* filter bar */
 .fbar{background:var(--surface);border-bottom:1px solid var(--line);padding:13px 26px;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;position:sticky;top:66px;z-index:1100;box-shadow:0 1px 4px rgba(14,27,42,.05)}
 .fbar .ftitle{font-size:11px;font-weight:700;color:var(--txt-3);text-transform:uppercase;letter-spacing:.07em;align-self:center;margin-right:4px}
@@ -70,7 +70,7 @@ h1,h2,h3,h4{font-family:'Space Grotesk';font-weight:600;letter-spacing:-.01em}
 .mtbl th.grp-tot{background:#3A2A5E;color:#fff}
 .mtbl td{text-align:center;vertical-align:middle}
 .mtbl td.ml{text-align:left}
-.mc{display:inline-flex;flex-direction:column;gap:3px;align-items:center}
+.mc{display:inline-flex;flex-direction:row;gap:7px;align-items:center;flex-wrap:wrap;justify-content:center}
 .mc-n{font-family:'IBM Plex Mono';font-weight:600;font-size:13.5px;background:#EEF2F6;border-radius:7px;padding:3px 11px;min-width:34px;text-align:center;cursor:pointer;color:var(--ink)}
 .mc-n:hover{background:#DCE6F0}
 .mc-n.z{color:var(--txt-3);background:#F4F6F9;cursor:default}
@@ -80,6 +80,14 @@ h1,h2,h3,h4{font-family:'Space Grotesk';font-weight:600;letter-spacing:-.01em}
 .mc-sub.dl{background:var(--red-l);color:#B91C1C}
 .mc-sub.tt{background:#E7ECF2;color:var(--ink)}
 .mc-sub.rr{background:var(--blue-l);color:#1D4FAB}
+.det{color:var(--blue);cursor:pointer;font-weight:600}.det:hover{text-decoration:underline}
+.ins-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.ins{border:1px solid var(--line);border-left-width:4px;border-radius:10px;padding:13px 15px;background:#fff}
+.ins.good{border-left-color:var(--green);background:#F2FBF5}
+.ins.neu{border-left-color:var(--blue);background:#F4F8FE}
+.ins.bad{border-left-color:var(--amber);background:#FFF9EE}
+.ins .it{font-family:'Space Grotesk';font-weight:600;font-size:15px}
+.ins .ds{font-size:11.5px;color:var(--txt-2);margin-top:3px}
 .charts-row{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:15px}
 .charts-row2{display:grid;grid-template-columns:1.45fr 1fr;gap:15px;margin-bottom:15px}
 .chart-wrap{position:relative;height:225px}
@@ -146,14 +154,19 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 /* calendar */
 .cal-h{display:flex;align-items:center;gap:12px}
 .cal-nav{font:inherit;border:1px solid var(--line-2);background:var(--surface);border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:15px}
-.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;padding:16px}
-.cal .dow{font-size:11px;color:var(--txt-3);font-weight:600;text-align:center;padding-bottom:4px}
-.cell{min-height:78px;border:1px solid var(--line);border-radius:8px;padding:5px 6px;font-size:11px}
-.cell.out{background:#FAFBFC;color:var(--txt-3)}
-.cell .dn{font-weight:600;font-size:11px;color:var(--txt-2);margin-bottom:3px}
+.calpanel{border:2px solid #1D4ED8}
+.calpanel .panel-h{background:#1D4ED8;color:#fff;border-bottom:2px solid #1D4ED8}
+.calpanel .panel-h h3{color:#fff}
+.calsel{font:inherit;font-size:12.5px;padding:6px 9px;border-radius:8px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.14);color:#fff}
+.calsel option{color:#1A2433}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:16px;background:#F4F8FF}
+.cal .dow{font-size:11px;color:#1D4ED8;font-weight:700;text-align:center;padding-bottom:4px}
+.cell{min-height:80px;border:1.5px solid #BFD4F5;border-radius:8px;padding:5px 6px;font-size:11px;background:#fff}
+.cell.out{background:#F0F4FA;border-color:#E5EAF2;color:var(--txt-3)}
+.cell .dn{font-weight:600;font-size:11px;color:#1D4ED8;margin-bottom:3px}
 .ev{font-size:10.5px;padding:1px 5px;border-radius:4px;margin-bottom:2px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev-dev{background:var(--solar);color:#5A3D00}.ev-dsn{background:var(--blue-l);color:#1D4FAB}
-.cell.has{cursor:pointer}.cell.has:hover{border-color:var(--blue);background:#F7FAFE}
+.cell.has{cursor:pointer}.cell.has:hover{border-color:#1D4ED8;background:#EEF4FE}
 .daycard{border:1px solid var(--line);border-left-width:4px;border-radius:10px;padding:13px 15px;margin-bottom:11px}
 .daycard.dev{border-left-color:var(--solar);background:#FFFBF3}
 .daycard.dsn{border-left-color:var(--blue);background:#F6F9FE}
@@ -230,17 +243,17 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 </div>
 
 <div class="tabs" id="tabs">
-  <div class="tab active" data-v="overview">Overview</div>
-  <div class="tab" data-v="funnel">Funnel</div>
-  <div class="tab" data-v="map">Map</div>
-  <div class="tab" data-v="dev">DEV</div>
-  <div class="tab" data-v="design">Design</div>
-  <div class="tab" data-v="pending">Pending</div>
-  <div class="tab" data-v="tat">TAT &amp; SLA</div>
-  <div class="tab" data-v="calendar">Calendar</div>
-  <div class="tab" data-v="cohort">Cohort</div>
-  <div class="tab" data-v="projects">Projects</div>
-  <div class="tab" data-v="team">Team</div>
+  <div class="tab active" data-v="overview" style="--tc:#2563C9;--tcl:#E5EEFB">Overview</div>
+  <div class="tab" data-v="funnel" style="--tc:#9333EA;--tcl:#F1E7FC">Funnel</div>
+  <div class="tab" data-v="map" style="--tc:#0E9488;--tcl:#DCF4F1">Map</div>
+  <div class="tab" data-v="dev" style="--tc:#1E5BAA;--tcl:#E2ECF8">DEV</div>
+  <div class="tab" data-v="design" style="--tc:#16A34A;--tcl:#E3F6EA">Design</div>
+  <div class="tab" data-v="pending" style="--tc:#D97706;--tcl:#FEF1DC">Pending</div>
+  <div class="tab" data-v="tat" style="--tc:#6E59C7;--tcl:#ECE8FA">TAT &amp; SLA</div>
+  <div class="tab" data-v="calendar" style="--tc:#1D4ED8;--tcl:#E3EAFD">Calendar</div>
+  <div class="tab" data-v="cohort" style="--tc:#C2410C;--tcl:#FBE6DC">Cohort</div>
+  <div class="tab" data-v="projects" style="--tc:#475569;--tcl:#EBEEF2">Projects</div>
+  <div class="tab" data-v="team" style="--tc:#15633F;--tcl:#DCEFE4">Team</div>
 </div>
 
 <div class="wrap">
@@ -275,10 +288,12 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
   </div>
 
   <div class="view" id="v-dev"><div class="kpis" id="devKpis"></div>
-    <div class="panel"><div class="panel-h"><h3>DEV records</h3></div><div class="panel-b flush"><div class="tbl-wrap"><table id="devTbl"></table></div></div></div></div>
+    <div class="panel"><div class="panel-h"><h3>DEV records</h3></div><div class="panel-b flush"><div class="tbl-wrap"><table id="devTbl"></table></div></div></div>
+    <div class="panel" style="margin-top:15px"><div class="panel-h"><h3>DEV-wise report</h3><span class="hint">assigned · completed · pending · % — click a name</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="devWiseTbl"></table></div></div></div></div>
 
   <div class="view" id="v-design"><div class="kpis" id="dsnKpis"></div>
-    <div class="panel"><div class="panel-h"><h3>Design records</h3></div><div class="panel-b flush"><div class="tbl-wrap"><table id="dsnTbl"></table></div></div></div></div>
+    <div class="panel"><div class="panel-h"><h3>Design records</h3></div><div class="panel-b flush"><div class="tbl-wrap"><table id="dsnTbl"></table></div></div></div>
+    <div class="panel" style="margin-top:15px"><div class="panel-h"><h3>Designer-wise report</h3><span class="hint">assigned · completed · pending · % (design + revision) — click a name</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="dsnWiseTbl"></table></div></div></div></div>
 
   <div class="view" id="v-pending">
     <div class="kpis" id="pendKpis"></div>
@@ -293,17 +308,24 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 
   <div class="view" id="v-tat">
     <div class="note"><span>⚠</span><span>SLA applies to new leads only. <b>Omega</b> (≥200 kWp) &amp; customised MMS = manual review, never auto-flagged. DEV TAT counts from client-permission date.</span></div>
+    <div class="kpis" id="tatCards"></div>
+    <div class="panel" style="margin-bottom:15px"><div class="panel-h"><h3>Design pathway insight</h3><span class="hint">site visit vs satellite · which path · who's better</span></div><div class="panel-b" id="tatInsight"></div></div>
+    <div class="panel" style="margin-bottom:15px"><div class="panel-h"><h3>Internal designers (DE)</h3><span class="hint">all cells clickable · <span class="det" onclick="openTatDetail('Internal')">Details ▸</span></span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="tatIntTbl"></table></div></div></div>
+    <div class="panel" style="margin-bottom:15px"><div class="panel-h"><h3>External designers (ODE)</h3><span class="hint">all cells clickable · <span class="det" onclick="openTatDetail('External')">Details ▸</span></span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="tatExtTbl"></table></div></div></div>
     <div class="grid g-2">
-      <div class="panel"><div class="panel-h"><h3>Internal vs External</h3></div><div class="panel-b"><div class="grid g-2" id="intExt"></div></div></div>
       <div class="panel"><div class="panel-h"><h3>SLA matrix (days)</h3></div><div class="panel-b flush"><div class="tbl-wrap"><table id="slaMatrix"></table></div></div></div>
+      <div class="panel"><div class="panel-h"><h3>Delay tracking — completed designs</h3></div><div class="panel-b flush"><div class="tbl-wrap"><table id="delayTbl"></table></div></div></div>
     </div>
-    <div class="panel" style="margin-top:15px"><div class="panel-h"><h3>Delay tracking — completed designs</h3></div><div class="panel-b flush"><div class="tbl-wrap"><table id="delayTbl"></table></div></div></div>
   </div>
 
   <div class="view" id="v-calendar">
-    <div class="panel"><div class="panel-h">
+    <div class="panel calpanel"><div class="panel-h" style="flex-wrap:wrap;gap:10px">
       <div class="cal-h"><button class="cal-nav" onclick="calMove(-1)">‹</button><h3 id="calLabel"></h3><button class="cal-nav" onclick="calMove(1)">›</button></div>
-      <div class="map-ctl" id="calCtl"><button class="on" data-c="both">DEV + Design</button><button data-c="dev">DEV</button><button data-c="dsn">Design</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <div class="map-ctl" id="calCtl"><button class="on" data-c="both">DEV + Design</button><button data-c="dev">DEV</button><button data-c="dsn">Design</button></div>
+        <select id="calType" class="calsel"><option value="">Int + Ext</option><option value="Internal">Internal</option><option value="External">External</option></select>
+        <select id="calDesigner" class="calsel"><option value="">All designers</option></select>
+      </div>
     </div><div class="cal" id="cal"></div></div>
   </div>
 
@@ -496,7 +518,7 @@ function renderCharts(L){
   $("#convFunnel").innerHTML=frow("Total unique leads",L,"#2563C9",null)+frow("DEV completed",devC,"#0E9488",total)+frow("Design completed",dsnC,"#16A34A",total)+frow("On-time (SLA)",onT,"#0E1B2A",dsnC.length);
   // 5) design & dev completed by month
   const mk=k=>monthKey(k);
-  const months=[...new Set(L.flatMap(x=>[mk(x.dev?.completedDate),mk(x.design.completed)]).filter(Boolean))].sort();
+  const months=[...new Set(L.flatMap(x=>[mk(x.dev?.completedDate),mk(x.design.completed)]).filter(Boolean))].sort().slice(-6);
   mkChart("cMonth",{type:"bar",data:{labels:months.map(monthLbl),datasets:[
       {label:"Design completed",data:months.map(m=>L.filter(x=>mk(x.design.completed)===m).length),backgroundColor:"#16A34A",borderRadius:5,maxBarThickness:26},
       {label:"DEV completed",data:months.map(m=>L.filter(x=>mk(x.dev?.completedDate)===m).length),backgroundColor:"#0E1B2A",borderRadius:5,maxBarThickness:26}]},
@@ -651,15 +673,15 @@ function drillTable(leads){
 }
 function drillBreak(leads,title){
   window._drillLeads=leads;window._drillTitle=title;
-  return `<div class="dtab" id="drillTabs"><button class="on" onclick="drillDim('city',this)">By City</button><button onclick="drillDim('month',this)">By Month (HOTO)</button><button onclick="drillDim('size',this)">By Size</button><button onclick="drillDim('designer',this)">By Designer</button></div><div id="drillBody"></div>`;
+  return `<div class="dtab" id="drillTabs"><button class="on" onclick="drillDim('city',this)">By City</button><button onclick="drillDim('month',this)">By Month (HOTO)</button><button onclick="drillDim('size',this)">By Size</button><button onclick="drillDim('dev',this)">By DEV</button><button onclick="drillDim('designer',this)">By Designer</button></div><div id="drillBody"></div>`;
 }
 function drillDim(dim,btn){
   if(btn){[...btn.parentNode.children].forEach(b=>b.classList.remove("on"));btn.classList.add("on");}
   const leads=window._drillLeads||[];const total=leads.length;
-  const keyFn={city:x=>x.city||"—",month:x=>monthLbl(monthKey(x.hoto))||"—",size:x=>x.cat,designer:x=>x.design.assignedTo||"Unassigned"}[dim];
+  const keyFn={city:x=>x.city||"—",month:x=>monthLbl(monthKey(x.hoto))||"—",size:x=>x.cat,designer:x=>x.design.assignedTo||"Unassigned",dev:x=>(x.dev&&x.dev.devName)||"No DEV"}[dim];
   const grp={};leads.forEach(x=>{const k=keyFn(x);(grp[k]=grp[k]||[]).push(x);});
   const rows=Object.entries(grp).sort((a,b)=>b[1].length-a[1].length);
-  const head={city:"City",month:"Month",size:"Size",designer:"Designer"}[dim];
+  const head={city:"City",month:"Month",size:"Size",designer:"Designer",dev:"DEV"}[dim];
   let html=`<div class="tbl-wrap"><table><thead><tr><th>${head}</th><th>Count</th><th>% of total</th></tr></thead><tbody>`+
    rows.map(([k,arr])=>{const pct=total?Math.round(arr.length/total*1000)/10:0;const col=pct>=15?"var(--green)":pct>=5?"var(--amber)":"var(--red)";
      return `<tr><td><b>${k}</b></td><td><a class="link" onclick='drillSet(${JSON.stringify(arr.map(a=>a.id))},"${String(k).replace(/"/g,"")}")'>${arr.length}</a></td><td style="color:${col};font-weight:600">${pct}%</td></tr>`;}).join("")+`</tbody></table></div>`;
@@ -696,21 +718,59 @@ function renderLegend(){const items=mapMode==="city"?Object.entries(CITY_COL):ma
   $("#mapLegend").innerHTML=items.map(([k,c])=>`<span class="it"><span class="sw" style="background:${c}"></span>${k}</span>`).join("")+`<span class="it" style="margin-left:auto;color:#DC2626"><span class="sw" style="background:#FCE7E7;border-color:#DC2626"></span>Off-site DEV</span>`;}
 
 /* ====== DEV table ====== */
-function renderDev(){const L=filtered().filter(x=>x.dev);
-  const done=L.filter(x=>x.dev.finalStatus==="Completed").length,resch=L.reduce((a,x)=>a+x.dev.reschedules,0),off=L.filter(x=>x.dev.onsite===false).length;
-  $("#devKpis").innerHTML=kpi("DEV visits",L.length,`${done} completed`,"var(--solar)")+kpi("Reschedules",resch,"all visits","var(--amber)")+kpi("Off-site",off,`> ${ONSITE_KM} km`,"var(--red)")+kpi("Avg DEV TAT",avgOf(L.filter(x=>x.dev.devTat!=null).map(x=>x.dev.devTat))+"<small> d</small>","permission → done","var(--teal)");
-  $("#devTbl").innerHTML=`<thead><tr><th>Lead / Project</th><th>DEV</th><th>Status</th><th>Resch.</th><th>DEV TAT</th><th>Location</th><th></th></tr></thead><tbody>`+
-   L.map(L0=>{const d=L0.dev,dl=d.distKm==null?'<span class="muted">—</span>':(d.onsite?`<span class="dist" style="color:var(--green)">● on-site <span class="km">${d.distKm}km</span></span>`:`<span class="dist" style="color:var(--red)">▲ off-site <span class="km">${d.distKm}km</span></span>`);
-     return `<tr><td><b>${L0.project}</b><br><span class="mono muted" style="font-size:10px">${L0.id}</span></td><td>${d.devName}</td><td>${statusPill(d.finalStatus)}</td><td>${d.reschedules}</td><td class="tat-cell">${fmt(d.devTat)} d</td><td>${dl}</td><td><a class="link" onclick='openLead("${L0.id}","dev")'>DEV →</a></td></tr>`;}).join("")+`</tbody>`;
-  if(!L.length)$("#devTbl").innerHTML+=`<tbody><tr><td colspan="7" style="text-align:center;padding:30px" class="muted">No DEV records.</td></tr></tbody>`;}
+function drillBreakIds(ids,title){const L=leadsByIds(ids);showModal(title,`${L.length} lead(s) · pick a dimension`,drillBreak(L,title));}
+function cardKpi(lbl,arr,sub,accent){return kpi(lbl,arr.length,sub,accent,`drillBreakIds(${JSON.stringify(arr.map(a=>a.id))},"${lbl.replace(/"/g,"")}")`);}
+function renderDev(){const Lall=filtered();
+  const devLeads=Lall.filter(x=>x.devReq==="Yes");
+  const done=devLeads.filter(x=>x.dev&&x.dev.finalStatus==="Completed");
+  const revisit=devLeads.filter(x=>(x.devAll||[]).length>1);
+  const pend=devLeads.filter(x=>x.dev&&!["Completed","Cancelled"].includes(x.dev.finalStatus));
+  const pendFresh=pend.filter(x=>(x.devAll||[]).length<=1),pendRev=pend.filter(x=>(x.devAll||[]).length>1);
+  const onT=done.filter(x=>{const t=SLA.first[x.cat]?SLA.first[x.cat].dev:0;return t&&x.dev.devTat!=null&&x.dev.devTat<=t;});
+  $("#devKpis").innerHTML=
+    cardKpi("Expected DEV",devLeads,"DEV required","var(--solar)")+
+    cardKpi("Re-visits",revisit,">1 DEV visit","var(--amber)")+
+    cardKpi("Completed",done,`${onT.length} on-time`,"var(--green)")+
+    cardKpi("Pending",pend,`Fresh ${pendFresh.length} · Revisit ${pendRev.length}`,"var(--red)");
+  const Lr=devLeads.filter(x=>x.dev);
+  $("#devTbl").innerHTML=`<thead><tr><th>Lead / Project</th><th>DEV</th><th>Status</th><th>DEV count</th><th>Resch.</th><th>DEV TAT</th><th>Location</th><th></th></tr></thead><tbody>`+
+   Lr.map(L0=>{const d=L0.dev,dl=d.distKm==null?'<span class="muted">—</span>':(d.onsite?`<span class="dist" style="color:var(--green)">● on-site <span class="km">${d.distKm}km</span></span>`:`<span class="dist" style="color:var(--red)">▲ off-site <span class="km">${d.distKm}km</span></span>`);
+     return `<tr><td><b>${L0.project}</b><br><span class="mono muted" style="font-size:10px">${L0.id}</span></td><td>${d.devName}</td><td>${statusPill(d.finalStatus)}</td><td style="text-align:center"><b>${(L0.devAll||[]).length}</b></td><td>${d.reschedules}</td><td class="tat-cell">${fmt(d.devTat)} d</td><td>${dl}</td><td><a class="link" onclick='openLead("${L0.id}","dev")'>DEV →</a></td></tr>`;}).join("")+`</tbody>`;
+  if(!Lr.length)$("#devTbl").innerHTML+=`<tbody><tr><td colspan="8" style="text-align:center;padding:30px" class="muted">No DEV records.</td></tr></tbody>`;
+  // DEV-wise report
+  const W={};Lall.forEach(L=>{(L.devAll||[]).forEach((v,i)=>{const n=v.devName;if(!n)return;const s=W[n]||(W[n]={name:n,assigned:[],comp:[],pend:[]});s.assigned.push(L.id);if(v.status==="Completed")s.comp.push(L.id);else if(v.status!=="Cancelled")s.pend.push(L.id);});});
+  const rows=Object.values(W).sort((a,b)=>uniq(b.assigned).length-uniq(a.assigned).length);
+  const numC=(ids,lbl)=>{const u=uniq(ids);return u.length?`<span class="mc-n" onclick='drillSet(${JSON.stringify(u)},"${lbl.replace(/"/g,"")}")'>${u.length}</span>`:'<span class="mc-n z">0</span>';};
+  $("#devWiseTbl").className="mtbl";
+  $("#devWiseTbl").innerHTML=`<thead><tr><th class="ml" style="text-align:left">DEV</th><th>Assigned</th><th>Completed</th><th>Pending</th><th>%</th></tr></thead><tbody>`+
+   (rows.length?rows.map(s=>{const a=uniq(s.assigned).length,c=uniq(s.comp).length,p=uniq(s.pend).length,pct=a?Math.round(c/a*100):0;
+     return `<tr><td class="ml"><b>${s.name}</b></td><td>${numC(s.assigned,s.name+" assigned")}</td><td>${numC(s.comp,s.name+" completed")}</td><td>${numC(s.pend,s.name+" pending")}</td><td><b style="color:${pct>=70?'var(--green)':pct>=40?'var(--amber)':'var(--red)'}">${pct}%</b></td></tr>`;}).join("")
+     :`<tr><td colspan="5" class="muted" style="padding:20px;text-align:center">No DEV data.</td></tr>`)+`</tbody>`;
+}
 
 /* ====== Design table ====== */
 function renderDesign(){const L=filtered();
-  const comp=L.filter(x=>x.design.status==="Completed").length,pend=L.filter(x=>x.design.status==="Pending").length,rev=L.reduce((a,x)=>a+x.design.revisions,0);
-  $("#dsnKpis").innerHTML=kpi("Designs",L.length,`${comp} completed`,"var(--green)")+kpi("Pending",pend,"in progress","var(--amber)")+kpi("Revisions",rev,"total","var(--blue)")+kpi("Avg design TAT",avgOf(L.filter(x=>x.design.status==="Completed"&&x.design.designTat!=null).map(x=>x.design.designTat))+"<small> d</small>","completed","var(--teal)");
-  $("#dsnTbl").innerHTML=`<thead><tr><th>Lead / Project</th><th>Size</th><th>Designer</th><th>Type</th><th>Rev.</th><th>Status</th><th>TAT vs target</th><th></th></tr></thead><tbody>`+
+  const expected=L.filter(x=>x.devReq!=="Yes"||(x.dev&&x.dev.finalStatus==="Completed"));
+  const comp=L.filter(x=>x.design.status==="Completed");
+  const pend=L.filter(x=>x.design.status==="Pending");
+  const revLeads=L.filter(x=>(x.design.revisions||0)>0);
+  const onT=comp.filter(x=>x.design.slaState==="On time");
+  $("#dsnKpis").innerHTML=
+    cardKpi("Expected design",expected,"DEV not req + DEV done","var(--solar)")+
+    cardKpi("Completed",comp,`${onT.length} on-time`,"var(--green)")+
+    cardKpi("Pending",pend,"in progress","var(--amber)")+
+    cardKpi("With revisions",revLeads,`${L.reduce((a,x)=>a+(x.design.revisions||0),0)} total revisions`,"var(--blue)");
+  $("#dsnTbl").innerHTML=`<thead><tr><th>Lead / Project</th><th>Size</th><th>Designer</th><th>Type</th><th>Revisions</th><th>Status</th><th>TAT vs target</th><th></th></tr></thead><tbody>`+
    L.map(L0=>{const d=L0.design;let tat='<span class="muted">—</span>';if(d.status==="Completed"){if(d.target===0)tat='<span class="pill p-gray"><span class="d"></span>manual</span>';else{const c=d.variance>0?"over":"under";tat=`<span class="tat-cell">${d.designTat}d / ${d.target}d <span class="${c}">(${d.variance>0?'+':''}${d.variance})</span></span>`;}}else if(d.status==="Cancelled"){tat=`<span style="color:var(--red);font-size:11.5px">${d.cancelReason||d.instType}</span>`;}
-     return `<tr><td><b>${L0.project}</b><br><span class="mono muted" style="font-size:10px">${L0.id}</span></td><td><span class="cat cat-${L0.cat}">${L0.cat}</span></td><td>${d.designer}</td><td><span class="pill ${d.type==='Internal'?'p-blue':'p-gray'}"><span class="d"></span>${d.type}</span></td><td>${d.revisions}</td><td>${statusPill(d.status)}</td><td>${tat}</td><td><a class="link" onclick='openLead("${L0.id}","dsn")'>Design →</a></td></tr>`;}).join("")+`</tbody>`;}
+     return `<tr><td><b>${L0.project}</b><br><span class="mono muted" style="font-size:10px">${L0.id}</span></td><td><span class="cat cat-${L0.cat}">${L0.cat}</span></td><td>${d.designer}</td><td><span class="pill ${d.type==='Internal'?'p-blue':'p-gray'}"><span class="d"></span>${d.type}</span></td><td>${d.revisions}</td><td>${statusPill(d.status)}</td><td>${tat}</td><td><a class="link" onclick='openLead("${L0.id}","dsn")'>Design →</a></td></tr>`;}).join("")+`</tbody>`;
+  // designer-wise report (internal + external combined)
+  const S=designerStats();const rows=Object.values(S).sort((a,b)=>uniq([...b.dA,...b.rA]).length-uniq([...a.dA,...a.rA]).length);
+  const numC=(ids,lbl)=>{const u=uniq(ids);return u.length?`<span class="mc-n" onclick='drillSet(${JSON.stringify(u)},"${lbl.replace(/"/g,"")}")'>${u.length}</span>`:'<span class="mc-n z">0</span>';};
+  $("#dsnWiseTbl").className="mtbl";
+  $("#dsnWiseTbl").innerHTML=`<thead><tr><th class="ml" style="text-align:left">Designer</th><th>Type</th><th>Assigned (D+R)</th><th>Completed (D+R)</th><th>Pending</th><th>%</th></tr></thead><tbody>`+
+   (rows.length?rows.map(s=>{const a=uniq([...s.dA,...s.rA]).length,c=uniq([...s.dC,...s.rC]).length,p=uniq(s.pend).length,pct=a?Math.round(c/a*100):0;
+     return `<tr><td class="ml"><a class="link" onclick='openDesignerDetail(${JSON.stringify(s.name)})'>${s.name}</a></td><td><span class="pill ${s.type==='Internal'?'p-blue':'p-gray'}"><span class="d"></span>${s.type}</span></td><td>${numC([...s.dA,...s.rA],s.name+" assigned")} <span class="muted" style="font-size:11px">(${uniq(s.dA).length}+${uniq(s.rA).length})</span></td><td>${numC([...s.dC,...s.rC],s.name+" completed")} <span class="muted" style="font-size:11px">(${uniq(s.dC).length}+${uniq(s.rC).length})</span></td><td>${numC(s.pend,s.name+" pending")}</td><td><b style="color:${pct>=70?'var(--green)':pct>=40?'var(--amber)':'var(--red)'}">${pct}%</b></td></tr>`;}).join("")
+     :`<tr><td colspan="6" class="muted" style="padding:20px;text-align:center">No designers.</td></tr>`)+`</tbody>`;}
 
 /* ====== Pending ageing ====== */
 function renderPending(){const P=filtered().filter(x=>x.design.status==="Pending");
@@ -726,27 +786,94 @@ function renderPending(){const P=filtered().filter(x=>x.design.status==="Pending
   if(!P.length)$("#pendTbl").innerHTML+=`<tbody><tr><td colspan="7" style="text-align:center;padding:30px" class="muted">No pending designs.</td></tr></tbody>`;}
 
 /* ====== TAT ====== */
-function renderTat(){const L=filtered();
-  const grp=t=>{const r=L.filter(x=>x.design.type===t),comp=r.filter(x=>x.design.status==="Completed"),tats=comp.filter(x=>x.design.designTat!=null).map(x=>x.design.designTat),meas=comp.filter(x=>["On time","Delayed"].includes(x.design.slaState)),onT=meas.filter(x=>x.design.slaState==="On time").length;
-    return {count:r.length,completed:comp.length,avg:avgOf(tats),rev:r.reduce((a,x)=>a+x.design.revisions,0),sla:meas.length?Math.round(onT/meas.length*100):0};};
-  const I=grp("Internal"),E=grp("External");
-  const card=(n,c,col)=>`<div style="border:1px solid var(--line);border-radius:10px;padding:15px"><h4 style="font-size:13px;margin-bottom:12px"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${col};margin-right:7px"></span>${n}</h4>
-    ${[["Designs handled",c.count],["Completed",c.completed],["Avg design TAT",c.avg+" d"],["Revisions",c.rev],["SLA on-time",c.sla+"%"]].map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px"><span>${k}</span><b class="mono" style="font-weight:500">${v}</b></div>`).join("")}</div>`;
-  $("#intExt").innerHTML=card("Internal",I,"var(--blue)")+card("External",E,"var(--teal)");
+function tatTable(stats){
+  const list=Object.values(stats).filter(s=>uniq([...s.dA,...s.rA]).length>0||true).sort((a,b)=>uniq([...b.dA,...b.rA]).length-uniq([...a.dA,...a.rA]).length);
+  const cell=(dIds,rIds,lbl)=>{const tU=uniq([...dIds,...rIds]),dU=uniq(dIds),rU=uniq(rIds);
+    const b=(ids,lab,cls)=>`<span class="mc-sub ${cls}" ${ids.length?`onclick='drillSet(${JSON.stringify(ids)},"${(lbl+" "+lab).replace(/"/g,"")}")'`:""} style="cursor:${ids.length?"pointer":"default"}">${lab} ${ids.length}</span>`;
+    return `<div class="mc">${tU.length?`<span class="mc-n" onclick='drillSet(${JSON.stringify(tU)},"${lbl.replace(/"/g,"")}")'>${tU.length}</span>`:'<span class="mc-n z">0</span>'}<div style="display:flex;flex-direction:column;gap:3px">${b(dU,"D","on")}${b(rU,"R","rr")}</div></div>`;};
+  const rows=list.map(s=>{const aT=uniq([...s.dA,...s.rA]).length,cT=uniq([...s.dC,...s.rC]).length,onT=uniq([...s.onD,...s.onR]).length,dlT=uniq([...s.dlD,...s.dlR]).length;
+    const complPct=aT?Math.round(cT/aT*100):0,onPct=(onT+dlT)?Math.round(onT/(onT+dlT)*100):0;
+    return `<tr><td class="ml"><a class="link" onclick='openDesignerDetail(${JSON.stringify(s.name)})'>${s.name}</a></td>
+      <td>${cell(s.dA,s.rA,s.name+" assigned")}</td><td>${cell(s.dC,s.rC,s.name+" completed")}</td><td>${cell(s.pendD,s.pendR,s.name+" pending")}</td>
+      <td>${cell(s.onD,s.onR,s.name+" on-time")}</td><td>${cell(s.dlD,s.dlR,s.name+" delayed")}</td>
+      <td><b style="color:${complPct>=70?'var(--green)':complPct>=40?'var(--amber)':'var(--red)'}">${complPct}%</b></td>
+      <td><b style="color:${onPct>=70?'var(--green)':onPct>=40?'var(--amber)':'var(--red)'}">${onPct}%</b></td></tr>`;}).join("");
+  return `<thead><tr><th class="ml" style="text-align:left">Designer</th><th>Assigned</th><th>Completed</th><th>Pending</th><th>On-time</th><th>Delayed</th><th>Compl %</th><th>On-time %</th></tr></thead><tbody>${rows||`<tr><td colspan="8" class="muted" style="padding:20px;text-align:center">No designers.</td></tr>`}</tbody>`;
+}
+function renderTat(){const L=filtered();const total=L.length;
+  const withDEV=L.filter(x=>x.dev&&x.dev.finalStatus==="Completed");
+  const withoutDEV=L.filter(x=>x.devReq==="No");
+  const expected=L.filter(x=>x.devReq!=="Yes"||(x.dev&&x.dev.finalStatus==="Completed"));
+  const assigned=expected.filter(x=>x.design.assignedTo);
+  const assignPend=expected.filter(x=>!x.design.assignedTo);
+  const assignedNotDone=assigned.filter(x=>x.design.status==="Pending");
+  const pct=(a,b)=>b?Math.round(a/b*100):0;
+  $("#tatCards").innerHTML=
+    cardKpi("Total leads",L,"received","var(--ink)")+
+    cardKpi("Expected design",expected,`${withDEV.length} with DEV · ${withoutDEV.length} without · ${pct(expected.length,total)}%`,"var(--solar)")+
+    cardKpi("Design assigned",assigned,`${pct(assigned.length,expected.length)}% of expected`,"var(--blue)")+
+    cardKpi("Assign pending",assignPend,`${pct(assignPend.length,expected.length)}% of expected`,"var(--amber)")+
+    cardKpi("Assigned, not completed",assignedNotDone,`${pct(assignedNotDone.length,assigned.length)}% of assigned`,"var(--red)");
+  // insight
+  const siteVisit=L.filter(x=>x.dev&&x.dev.finalStatus==="Completed"&&x.design.status==="Completed");
+  const satellite=L.filter(x=>x.devReq==="No"&&x.design.status==="Completed");
+  const startedThenDEV=L.filter(x=>x.dev&&x.design.assigned&&x.dev.completedDate&&String(x.design.assigned)<String(x.dev.completedDate));
+  const Sall=designerStats(L);const vals=Object.values(Sall);
+  const grpOn=t=>{const r=vals.filter(s=>s.type===t);const on=r.reduce((a,s)=>a+uniq([...s.onD,...s.onR]).length,0),dl=r.reduce((a,s)=>a+uniq([...s.dlD,...s.dlR]).length,0);return (on+dl)?Math.round(on/(on+dl)*100):0;};
+  const intOn=grpOn("Internal"),extOn=grpOn("External");
+  const better=intOn===extOn?"On par":intOn>extOn?"Internal":"External";
+  const ic=(cls,t,desc,arr)=>`<div class="ins ${cls}" ${arr&&arr.length?`style="cursor:pointer" onclick='drillBreakIds(${JSON.stringify(arr.map(a=>a.id))},"${t.replace(/"/g,"")}")'`:""}><div class="it">${t}</div><div class="ds">${desc}</div></div>`;
+  $("#tatInsight").innerHTML=`<div class="ins-grid">
+    ${ic("good","Site-visit designed: "+siteVisit.length,"DEV completed then designed",siteVisit)}
+    ${ic("neu","Satellite-based: "+satellite.length,"designed without site visit",satellite)}
+    ${ic("bad","Design started, DEV later: "+startedThenDEV.length,"design began before DEV completed",startedThenDEV)}
+    ${ic(better==="Internal"?"good":better==="External"?"neu":"neu","Better on-time: "+better,`Internal ${intOn}% vs External ${extOn}% on-time`,[])}
+  </div>`;
+  // tables
+  $("#tatIntTbl").className="mtbl";$("#tatExtTbl").className="mtbl";
+  const ip={};const ep={};vals.forEach(s=>{(s.type==="External"?ep:ip)[s.name]=s;});
+  $("#tatIntTbl").innerHTML=tatTable(ip);$("#tatExtTbl").innerHTML=tatTable(ep);
+  // SLA matrix + delay
   $("#slaMatrix").innerHTML=`<thead><tr><th>Cat</th><th>DC band</th><th>DEV</th><th>Design</th><th>Rev. design</th></tr></thead><tbody>`+
    [["Alpha","≤30"],["Beta","30–100"],["Gamma","100–200"],["Omega","≥200"]].map(([c,b])=>{const f=SLA.first[c],r=SLA.revision[c],d=v=>v===0?'<span class="muted">manual</span>':v+'d';return `<tr><td><span class="cat cat-${c}">${c}</span></td><td class="mono" style="font-size:11px">${b}</td><td>${d(f.dev)}</td><td>${d(f.design)}</td><td>${d(r.design)}</td></tr>`;}).join("")+`</tbody>`;
   const comp=L.filter(x=>x.design.status==="Completed");
-  $("#delayTbl").innerHTML=`<thead><tr><th>Project</th><th>Cat</th><th>Scenario</th><th>Target</th><th>Actual</th><th>Variance</th><th>Status</th></tr></thead><tbody>`+
-   comp.map(L0=>{const d=L0.design;if(d.target===0)return `<tr><td>${L0.project}</td><td><span class="cat cat-${L0.cat}">${L0.cat}</span></td><td>${d.scenario}</td><td colspan="3" class="muted">no fixed SLA</td><td>${statusPill("—")}</td></tr>`;const c=d.variance>0?"over":"under";return `<tr><td>${L0.project}</td><td><span class="cat cat-${L0.cat}">${L0.cat}</span></td><td>${d.scenario}</td><td class="tat-cell">${d.target}d</td><td class="tat-cell">${d.designTat}d</td><td class="tat-cell ${c}">${d.variance>0?'+':''}${d.variance}d</td><td>${statusPill(d.slaState)}</td></tr>`;}).join("")+`</tbody>`;}
+  $("#delayTbl").innerHTML=`<thead><tr><th>Project</th><th>Cat</th><th>Target</th><th>Actual</th><th>Delay</th><th>Status</th></tr></thead><tbody>`+
+   comp.slice(0,200).map(L0=>{const d=L0.design;if(d.target===0)return `<tr><td>${L0.project}</td><td><span class="cat cat-${L0.cat}">${L0.cat}</span></td><td colspan="2" class="muted">no SLA</td><td>—</td><td>${statusPill("—")}</td></tr>`;const c=d.variance>0?"over":"under";return `<tr><td>${L0.project}</td><td><span class="cat cat-${L0.cat}">${L0.cat}</span></td><td class="tat-cell">${d.target}d</td><td class="tat-cell">${d.designTat}d</td><td class="tat-cell ${c}">${d.variance>0?'+':''}${d.variance}d</td><td>${statusPill(d.slaState)}</td></tr>`;}).join("")+`</tbody>`;
+}
+function openTatDetail(type){
+  const L=filtered();
+  const withDEV=L.filter(x=>x.dev&&x.dev.finalStatus==="Completed");
+  const withoutDEV=L.filter(x=>x.devReq==="No");
+  window._tatType=type;window._tatWith=withDEV;window._tatWithout=withoutDEV;
+  const body=`<div class="dtab" id="tatDtab"><button class="on" onclick="tatDetailTab('with',this)">With DEV (site visit)</button><button onclick="tatDetailTab('without',this)">Without DEV (satellite)</button></div><div id="tatDetailBody"></div>`;
+  showModal(type+" designers — design pathway",`${withDEV.length} with DEV · ${withoutDEV.length} without`,body);
+  tatDetailTab("with");
+}
+function tatDetailTab(which,btn){
+  if(btn){[...btn.parentNode.children].forEach(b=>b.classList.remove("on"));btn.classList.add("on");}
+  const leads=which==="with"?window._tatWith:window._tatWithout;const type=window._tatType;
+  const S=designerStats(leads,false);const sub={};Object.values(S).forEach(s=>{if(s.type===type)sub[s.name]=s;});
+  document.getElementById("tatDetailBody").innerHTML=`<div class="tbl-wrap"><table class="mtbl">${tatTable(sub)}</table></div>`;
+}
 
 /* ====== CALENDAR ====== */
 let calDate=new Date("2026-06-01"),calMode="both";
 function calMove(n){calDate.setMonth(calDate.getMonth()+n);renderCalendar();}
+function calPopulateDesigners(){
+  const typeF=$("#calType")?$("#calType").value:"";
+  const names=[...new Set(filtered().flatMap(x=>(x.designAll||[]).filter(v=>!typeF||v.type===typeF).map(v=>v.designer)).filter(n=>n&&n!=="—"))].sort();
+  const sel=$("#calDesigner");if(!sel)return;const cur=sel.value;
+  sel.innerHTML=`<option value="">All designers</option>`+names.map(n=>`<option ${n===cur?"selected":""}>${n}</option>`).join("");
+}
 function renderCalendar(){const y=calDate.getFullYear(),m=calDate.getMonth();$("#calLabel").textContent=MN[m]+" "+y;
+  calPopulateDesigners();
+  const typeF=$("#calType")?$("#calType").value:"",dsnF=$("#calDesigner")?$("#calDesigner").value:"";
   const L=filtered();const events={};
   const add=(date,html,cls)=>{if(!date)return;const k=date.slice(0,10);(events[k]=events[k]||[]).push({html,cls});};
-  L.forEach(x=>{if((calMode==="both"||calMode==="dev")&&x.dev&&x.dev.completedDate)add(x.dev.completedDate,`DEV: ${x.project}`,"ev-dev");
-    if((calMode==="both"||calMode==="dsn")&&x.design.completed)add(x.design.completed,`Design: ${x.project}`,"ev-dsn");});
+  const dsnMatch=x=>{if(!typeF&&!dsnF)return true;return (x.designAll||[]).some(v=>(!typeF||v.type===typeF)&&(!dsnF||v.designer===dsnF));};
+  L.forEach(x=>{
+    if((calMode==="both"||calMode==="dev")&&x.dev&&x.dev.completedDate&&!typeF&&!dsnF)add(x.dev.completedDate,`DEV: ${x.project}`,"ev-dev");
+    if((calMode==="both"||calMode==="dsn")&&x.design.completed&&dsnMatch(x))add(x.design.completed,`Design: ${x.project}`,"ev-dsn");});
   const first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
   let html=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>`<div class="dow">${d}</div>`).join("");
   for(let i=0;i<first;i++)html+=`<div class="cell out"></div>`;
@@ -776,29 +903,66 @@ function dsnDayCard(L){const d=L.design;const sla=d.target===0?'<span class="pil
 
 /* ====== COHORT ====== */
 function renderCohort(){const L=filtered();const months=[...new Set(L.map(x=>monthKey(x.hoto)).filter(Boolean))].sort();
-  const row=m=>{const c=L.filter(x=>monthKey(x.hoto)===m);return {total:c.length,devReq:c.filter(x=>x.devReqState==="Required").length,devDone:c.filter(x=>x.dev&&x.dev.finalStatus==="Completed").length,dsnDone:c.filter(x=>x.design.status==="Completed").length,pend:c.filter(x=>x.design.status==="Pending").length};};
-  $("#cohortTbl").innerHTML=`<thead><tr><th>HOTO cohort</th><th>Leads</th><th>DEV req.</th><th>DEV done</th><th>Design done</th><th>Pending</th><th>Conv. %</th></tr></thead><tbody>`+
-   months.map(m=>{const r=row(m),pct=r.total?Math.round(r.dsnDone/r.total*100):0;
-     return `<tr><td class="hm">${monthLbl(m)}</td><td class="heat"><a class="link" onclick='drillHoto("${m}")'>${r.total}</a></td><td class="heat">${r.devReq}</td><td class="heat">${r.devDone}</td><td class="heat">${r.dsnDone}</td><td class="heat">${r.pend}</td><td class="heat"><b>${pct}%</b></td></tr>`;}).join("")+`</tbody>`;
+  $("#cohortTbl").className="mtbl";
+  const numC=(arr,lbl)=>{const u=arr.map(a=>a.id);return u.length?`<span class="mc-n" onclick='drillSet(${JSON.stringify(u)},"${lbl.replace(/"/g,"")}")'>${u.length}</span>`:'<span class="mc-n z">0</span>';};
+  const split=(dArr,rArr,lbl)=>{const all=uniq([...dArr.map(a=>a.id),...rArr.map(a=>a.id)]);
+    const b=(arr,lab,cls)=>`<span class="mc-sub ${cls}" ${arr.length?`onclick='drillSet(${JSON.stringify(arr.map(a=>a.id))},"${(lbl+" "+lab).replace(/"/g,"")}")'`:""} style="cursor:${arr.length?"pointer":"default"}">${lab} ${arr.length}</span>`;
+    return `<div class="mc">${all.length?`<span class="mc-n" onclick='drillSet(${JSON.stringify(all)},"${lbl.replace(/"/g,"")}")'>${all.length}</span>`:'<span class="mc-n z">0</span>'}<div style="display:flex;flex-direction:column;gap:3px">${b(dArr,"D","on")}${b(rArr,"R","rr")}</div></div>`;};
+  $("#cohortTbl").innerHTML=`<thead><tr><th class="ml" style="text-align:left">HOTO cohort</th><th>Leads</th><th>DEV req.</th><th>DEV done</th><th>Design done (D/R)</th><th>Pending</th><th>Conv. %</th></tr></thead><tbody>`+
+   months.map(m=>{const c=L.filter(x=>monthKey(x.hoto)===m);
+     const devReq=c.filter(x=>x.devReqState==="Required");
+     const devDone=c.filter(x=>x.dev&&x.dev.finalStatus==="Completed");
+     const dsnDoneD=c.filter(x=>x.design.status==="Completed");
+     const dsnDoneR=c.filter(x=>x.design.status==="Completed"&&(x.design.revisions||0)>0);
+     const pend=c.filter(x=>x.design.status==="Pending");
+     const pct=c.length?Math.round(dsnDoneD.length/c.length*100):0;
+     return `<tr><td class="ml"><a class="link" onclick='drillHoto("${m}")'><b>${monthLbl(m)}</b></a></td>
+       <td>${numC(c,monthLbl(m)+" leads")}</td><td>${numC(devReq,monthLbl(m)+" DEV req")}</td><td>${numC(devDone,monthLbl(m)+" DEV done")}</td>
+       <td>${split(dsnDoneD,dsnDoneR,monthLbl(m)+" design done")}</td><td>${numC(pend,monthLbl(m)+" pending")}</td>
+       <td><b style="color:${pct>=50?'var(--green)':pct>=25?'var(--amber)':'var(--red)'}">${pct}%</b></td></tr>`;}).join("")+`</tbody>`;
   if(!months.length)$("#cohortTbl").innerHTML+=`<tbody><tr><td colspan="7" style="text-align:center;padding:30px" class="muted">No cohorts.</td></tr></tbody>`;}
 
 /* ====== PROJECTS ====== */
 function renderProjects(){const q=($("#projSearch").value||"").toLowerCase();
   const L=filtered().filter(x=>!q||(x.project+x.id+x.city+x.cat).toLowerCase().includes(q));
-  $("#projTbl").innerHTML=`<thead><tr><th>Project</th><th>City</th><th>Size</th><th>HOTO</th><th>DEV req.</th><th>DEV</th><th>Designer</th><th>Type</th><th>Design</th><th>TAT</th><th></th></tr></thead><tbody>`+
-   L.map(L0=>{const d=L0.design;const tat=d.status==="Completed"&&d.designTat!=null?`${d.designTat}d`:(L0.dev&&L0.dev.devTat!=null?`DEV ${L0.dev.devTat}d`:"—");
-     return `<tr><td><b>${L0.project}</b><br><span class="mono muted" style="font-size:10px">${L0.id}</span></td><td>${L0.city}</td><td><span class="cat cat-${L0.cat}">${L0.cat}</span></td><td class="mono" style="font-size:11px">${monthLbl(monthKey(L0.hoto))}</td><td>${L0.devReqState}</td><td>${L0.dev?statusPill(L0.dev.finalStatus):'<span class="muted">—</span>'}</td><td>${d.assignedTo||'<span class="muted">—</span>'}</td><td>${d.type}</td><td>${statusPill(d.status)}</td><td class="tat-cell">${tat}</td><td style="white-space:nowrap"><button class="minibtn" onclick='openDevAll("${L0.id}")'>DEV data</button><button class="minibtn" onclick='openDesignAll("${L0.id}")'>Design data</button><button class="minibtn j" onclick='openLead("${L0.id}")'>Journey</button></td></tr>`;}).join("")+`</tbody>`;
-  if(!L.length)$("#projTbl").innerHTML+=`<tbody><tr><td colspan="11" style="text-align:center;padding:30px" class="muted">No projects match.</td></tr></tbody>`;}
+  $("#projTbl").innerHTML=`<thead><tr><th>Project</th><th>City</th><th>Size</th><th>HOTO date</th><th>DEV req.</th><th>DEV name</th><th>DEV completed</th><th>DEV TAT</th><th>Re-visits</th><th>Design assigned</th><th>Design completed</th><th>Revisions</th><th>Exp. TAT</th><th>Actual TAT</th><th>Delay</th><th></th></tr></thead><tbody>`+
+   L.map(L0=>{const d=L0.design;const dev=L0.dev;
+     const revisits=Math.max(0,(L0.devAll||[]).length-1);
+     let delay='<span class="muted">—</span>';
+     if(d.status==="Completed"){if(d.target===0)delay='<span class="pill p-gray"><span class="d"></span>manual</span>';
+       else if(d.slaState==="On time")delay='<span class="pill p-green"><span class="d"></span>On time</span>';
+       else if(d.slaState==="Delayed")delay=`<span class="pill p-red"><span class="d"></span>${d.variance} days delay</span>`;}
+     else if(d.status==="Cancelled")delay='<span class="pill p-red"><span class="d"></span>Cancelled</span>';
+     else if(d.status==="Pending")delay=`<span class="pill p-amber"><span class="d"></span>pending${d.ageDays!=null?" "+d.ageDays+"d":""}</span>`;
+     return `<tr><td><b>${L0.project}</b><br><span class="mono muted" style="font-size:10px">${L0.id}</span></td>
+       <td>${L0.city}</td><td><span class="cat cat-${L0.cat}">${L0.cat}</span></td>
+       <td class="mono" style="font-size:11px">${L0.hoto||"—"}</td>
+       <td>${L0.devReqState}</td>
+       <td>${dev?dev.devName||"—":'<span class="muted">—</span>'}</td>
+       <td class="mono" style="font-size:11px">${dev&&dev.completedDate?dev.completedDate:"—"}</td>
+       <td class="tat-cell">${dev&&dev.devTat!=null?dev.devTat+"d":"—"}</td>
+       <td style="text-align:center">${revisits||'<span class="muted">0</span>'}</td>
+       <td class="mono" style="font-size:11px">${d.assigned||"—"}</td>
+       <td class="mono" style="font-size:11px">${d.completed||"—"}</td>
+       <td style="text-align:center">${d.revisions||0}</td>
+       <td class="tat-cell">${d.target?d.target+"d":"—"}</td>
+       <td class="tat-cell">${d.designTat!=null?d.designTat+"d":"—"}</td>
+       <td>${delay}</td>
+       <td style="white-space:nowrap"><button class="minibtn" onclick='openDevAll("${L0.id}")'>DEV</button><button class="minibtn" onclick='openDesignAll("${L0.id}")'>Design</button><button class="minibtn j" onclick='openLead("${L0.id}")'>Journey</button></td></tr>`;}).join("")+`</tbody>`;
+  if(!L.length)$("#projTbl").innerHTML+=`<tbody><tr><td colspan="16" style="text-align:center;padding:30px" class="muted">No projects match.</td></tr></tbody>`;}
 
 /* ====== TEAM ====== */
-function designerStats(){
-  const S={};const get=n=>S[n]||(S[n]={name:n,type:null,dA:[],rA:[],dC:[],rC:[],pend:[],cap:0});
-  DATA.leads.forEach(L=>(L.designAll||[]).forEach((v,i)=>{
+function designerStats(leads,includeRoster){
+  leads=leads||DATA.leads;
+  const S={};const get=n=>S[n]||(S[n]={name:n,type:null,dA:[],rA:[],dC:[],rC:[],pend:[],pendD:[],pendR:[],onD:[],onR:[],dlD:[],dlR:[],cap:0});
+  leads.forEach(L=>{const tgt=SLA.first[L.cat]?SLA.first[L.cat].design:0;(L.designAll||[]).forEach((v,i)=>{
     const n=v.designer;if(!n||n==="—")return;const s=get(n);if(!s.type)s.type=v.type||"Internal";
     const isRev=i>0;(isRev?s.rA:s.dA).push(L.id);
-    if(v.status==="Completed"){(isRev?s.rC:s.dC).push(L.id);s.cap+=(v.cap||0);}else s.pend.push(L.id);
-  }));
-  (DATA.users||[]).filter(u=>u.role==="DE"||u.role==="ODE").forEach(u=>{const s=get(u.name);if(!s.type)s.type=u.role==="ODE"?"External":"Internal";});
+    if(v.status==="Completed"){(isRev?s.rC:s.dC).push(L.id);s.cap+=(v.cap||0);
+      if(tgt&&v.tat!=null){if(v.tat<=tgt)(isRev?s.onR:s.onD).push(L.id);else(isRev?s.dlR:s.dlD).push(L.id);}}
+    else if(v.status!=="Cancelled"){s.pend.push(L.id);(isRev?s.pendR:s.pendD).push(L.id);}
+  });});
+  if(includeRoster!==false)(DATA.users||[]).filter(u=>u.role==="DE"||u.role==="ODE").forEach(u=>{const s=get(u.name);if(!s.type)s.type=u.role==="ODE"?"External":"Internal";});
   return S;
 }
 const uniq=a=>[...new Set(a)];
@@ -814,7 +978,10 @@ function renderTeam(){
     +kpi("Designs completed",dsnDoneTotal,"design + revision","var(--green)")
     +kpi("Idle designers",all.filter(s=>score(s)===0).length,"0 assigned","var(--amber)");
   const sub=(ids,label,cls,lbl)=>{const u=uniq(ids);return `<span class="mc-sub ${cls}" ${u.length?`onclick='drillSet(${JSON.stringify(u)},"${(lbl+" "+label).replace(/"/g,"")}")'`:""} style="cursor:${u.length?"pointer":"default"}">${label} ${u.length}</span>`;};
-  const bcell=(dIds,rIds,lbl)=>`<div class="mc-subs" style="justify-content:center">${sub(uniq([...dIds,...rIds]),"T","tt",lbl)}${sub(dIds,"D","on",lbl)}${sub(rIds,"R","rr",lbl)}</div>`;
+  const bcell=(dIds,rIds,lbl)=>{const tU=uniq([...dIds,...rIds]);
+    return `<div style="display:flex;align-items:center;gap:9px;justify-content:center">
+      <span class="mc-n" ${tU.length?`onclick='drillSet(${JSON.stringify(tU)},"${lbl.replace(/"/g,"")}")'`:""} style="${tU.length?"":"cursor:default"}">${tU.length}</span>
+      <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-start">${sub(dIds,"D","on",lbl)}${sub(rIds,"R","rr",lbl)}</div></div>`;};
   const numCell=(ids,lbl)=>{const u=uniq(ids);return u.length?`<span class="mc-n" onclick='drillSet(${JSON.stringify(u)},"${lbl.replace(/"/g,"")}")'>${u.length}</span>`:`<span class="mc-n z">0</span>`;};
   const tbl=list=>{
     const rows=list.map(s=>{const aT=uniq([...s.dA,...s.rA]).length,cT=uniq([...s.dC,...s.rC]).length,pend=uniq(s.pend).length,pct=aT?Math.round(cT/aT*100):0;
@@ -881,7 +1048,7 @@ function leadTab(id,tab){const L=DATA.leads.find(x=>x.id===id);$$("#mBody .dtab 
   else if(tab==="dev"){if(!L.dev){B.innerHTML=`<div class="muted">DEV not required for this lead.</div>`;return;}const d=L.dev;
     B.innerHTML=`<div class="kv"><div class="k">DEV engineer</div><div class="v">${d.devName}</div><div class="k">Final status</div><div class="v">${statusPill(d.finalStatus)}</div><div class="k">Client permission</div><div class="v">${d.permission}</div><div class="k">Completed</div><div class="v">${d.completedDate||"—"}</div><div class="k">Reschedules</div><div class="v">${d.reschedules}</div><div class="k">Hold during DEV</div><div class="v">${d.holdDays?`${d.holdDays} d (${d.holdStart} → ${d.holdEnd})`:"—"}</div><div class="k">Reason for hold</div><div class="v">${d.holdReason||"—"}</div><div class="k">DEV TAT (gross)</div><div class="v">${fmt(d.grossTat)} days</div><div class="k">DEV TAT (net of hold)</div><div class="v"><b>${fmt(d.devTat)} days</b></div><div class="k">Distance from site</div><div class="v">${d.distKm==null?"—":d.distKm+" km ("+(d.onsite?"on-site":"off-site")+")"}</div></div>
      <h4 style="font-size:13px;margin:16px 0 8px">Visit attempts</h4><div class="tbl-wrap"><table><thead><tr><th>#</th><th>Scheduled</th><th>Result</th><th>Timestamp</th><th>Lat-Long</th></tr></thead><tbody>${d.blocks.map((b,i)=>`<tr><td>${i+1}</td><td>${b.sched}</td><td>${statusPill(b.connected)}</td><td class="mono" style="font-size:11px">${b.ts||"—"}</td><td class="mono" style="font-size:11px">${b.lat?b.lat+", "+b.lng:"—"}</td></tr>`).join("")}</tbody></table></div>`;}
-  else{const d=L.design;B.innerHTML=`<div class="kv"><div class="k">Designer</div><div class="v">${d.designer}</div><div class="k">Type</div><div class="v">${d.type}</div><div class="k">Status</div><div class="v">${statusPill(d.status)}</div><div class="k">Assigned</div><div class="v">${d.assigned||"—"}</div><div class="k">Completed</div><div class="v">${d.completed||"—"}</div><div class="k">Revisions</div><div class="v">${d.revisions}</div><div class="k">Final capacity</div><div class="v">${d.finalCap} kWp</div><div class="k">Installation</div><div class="v">${d.instType}</div>${d.status==="Cancelled"?`<div class="k">Cancellation remark</div><div class="v" style="color:var(--red)">${d.cancelReason||d.instType}</div>`:""}<div class="k">Design on hold</div><div class="v">${d.holdDays?`${d.holdDays} d (${d.holdStart} → ${d.holdEnd})`:"—"}</div><div class="k">Reason for hold</div><div class="v">${d.holdReason||"—"}</div><div class="k">Design TAT (gross)</div><div class="v">${d.grossTat==null?"—":d.grossTat+" days"}</div><div class="k">Design TAT (net of hold)</div><div class="v"><b>${d.designTat==null?"—":d.designTat+" days"}</b></div><div class="k">SLA target</div><div class="v">${d.target===0?"manual review":d.target+" days"}</div><div class="k">SLA result</div><div class="v">${d.status==="Completed"?statusPill(d.slaState):"—"}</div></div>`;}
+  else{const d=L.design;B.innerHTML=`<div class="kv"><div class="k">Designer</div><div class="v">${d.designer}</div><div class="k">Type</div><div class="v">${d.type}</div><div class="k">Status</div><div class="v">${statusPill(d.status)}</div><div class="k">Assigned</div><div class="v">${d.assigned||"—"}</div><div class="k">Completed</div><div class="v">${d.completed||"—"}</div><div class="k">Revisions</div><div class="v">${d.revisions}</div><div class="k">Final capacity</div><div class="v">${d.finalCap} kWp</div><div class="k">Installation</div><div class="v">${d.instType}</div>${d.status==="Cancelled"?`<div class="k">Cancellation remark</div><div class="v" style="color:var(--red)">${d.cancelReason||d.instType}</div>`:""}<div class="k">Design on hold</div><div class="v">${d.holdDays?`${d.holdDays} d (${d.holdStart} → ${d.holdEnd})`:"—"}</div><div class="k">Reason for hold</div><div class="v">${d.holdReason||"—"}</div><div class="k">Design TAT (gross)</div><div class="v">${d.grossTat==null?"—":d.grossTat+" days"}</div><div class="k">Design TAT (net of hold)</div><div class="v"><b>${d.designTat==null?"—":d.designTat+" days"}</b></div><div class="k">SLA target</div><div class="v">${d.target===0?"manual review":d.target+" days"}</div><div class="k">SLA result</div><div class="v">${d.status==="Completed"?statusPill(d.slaState)+(d.slaState==="Delayed"&&d.variance>0?` <b style="color:var(--red)">+${d.variance} days late</b>`:d.slaState==="On time"&&d.variance!=null?` <span class="muted">(${d.variance} d vs target)</span>`:""):"—"}</div></div>`;}
 }
 function openDevAll(id){const L=DATA.leads.find(x=>x.id===id);if(!L)return;const rows=L.devAll;
   if(!rows.length){showModal("DEV data — "+L.project,L.id,'<div class="muted">No DEV required / no DEV records for this lead.</div>');return;}
@@ -900,6 +1067,8 @@ function closeModal(){$("#modal").classList.remove("show");}
 $$(".tab").forEach(t=>t.onclick=()=>{$$(".tab").forEach(x=>x.classList.remove("active"));t.classList.add("active");const v=t.dataset.v;$$(".view").forEach(x=>x.classList.remove("active"));$("#v-"+v).classList.add("active");if(v==="map"){initMap();setTimeout(()=>map.invalidateSize(),60);}if(v==="calendar")renderCalendar();});
 $("#mapCtl").onclick=e=>{if(e.target.dataset.c){[...e.currentTarget.children].forEach(b=>b.classList.remove("on"));e.target.classList.add("on");mapMode=e.target.dataset.c;drawMarkers();}};
 $("#calCtl").onclick=e=>{if(e.target.dataset.c){[...e.currentTarget.children].forEach(b=>b.classList.remove("on"));e.target.classList.add("on");calMode=e.target.dataset.c;renderCalendar();}};
+$("#calType").addEventListener("change",()=>{if($("#calDesigner"))$("#calDesigner").value="";renderCalendar();});
+$("#calDesigner").addEventListener("change",renderCalendar);
 $("#projSearch").addEventListener("input",renderProjects);
 
 function renderAll(){
