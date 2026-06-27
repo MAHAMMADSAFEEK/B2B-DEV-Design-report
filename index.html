@@ -226,9 +226,36 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 .ins .ds{font-size:11.5px;color:var(--txt-2);margin-top:3px}
 .ins.good .it{color:#127538}.ins.bad .it{color:#B91C1C}.ins.neu .it{color:#1D4FAB}
 @media(max-width:880px){.g-2,.g-21,.g-3{grid-template-columns:1fr}}
+.login-bg{position:fixed;inset:0;background:linear-gradient(135deg,#0E1B2A,#1E4179);display:flex;align-items:center;justify-content:center;z-index:4000;padding:20px}
+.login-bg.hide{display:none}
+.login-card{background:#fff;border-radius:16px;padding:30px 28px;width:360px;max-width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:12px}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.login-logo img{width:44px;height:44px;border-radius:11px}
+.login-logo b{font-family:'Space Grotesk';font-size:20px;display:block;line-height:1.1}
+.login-logo span{font-size:11px;color:var(--txt-3);text-transform:uppercase;letter-spacing:.06em}
+.login-msg{font-size:12.5px;color:var(--txt-2)}
+.login-card input{font:inherit;font-size:14px;padding:11px 13px;border:1px solid var(--line-2);border-radius:9px}
+.login-card input:focus{outline:none;border-color:var(--blue)}
+.login-card button{font:inherit;font-size:14px;font-weight:600;color:#fff;background:var(--blue);border:none;padding:12px;border-radius:9px;cursor:pointer}
+.login-card button:hover{background:#1D4FAB}
+.login-card button:disabled{background:#94A3B8;cursor:not-allowed}
+.login-err{font-size:12.5px;color:var(--red);min-height:16px}
+.userbox .role{display:inline-block;font-size:9px;background:rgba(255,255,255,.18);padding:1px 6px;border-radius:5px;margin-left:5px;letter-spacing:.04em}
 </style>
 </head>
 <body>
+
+<div class="login-bg" id="loginBg">
+  <div class="login-card">
+    <div class="login-logo"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2rP2rpzHaGVMqgjZvGiLuzn9jTxvUz2CAUA&s" onerror="this.style.display='none'"><div><b>SolarOps</b><span>DEV &amp; Design Tracker</span></div></div>
+    <div class="login-msg" id="loginMsg">Loading users…</div>
+    <input id="loginEmail" type="email" placeholder="Email" autocomplete="username">
+    <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button id="loginBtn" onclick="doLogin()">Sign in</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
 
 <div class="topbar">
   <div class="logo">
@@ -260,6 +287,7 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
   <div class="tab" data-v="cohort" style="--tc:#C2410C;--tcl:#FBE6DC">Cohort</div>
   <div class="tab" data-v="projects" style="--tc:#475569;--tcl:#EBEEF2">Projects</div>
   <div class="tab" data-v="team" style="--tc:#15633F;--tcl:#DCEFE4">Team</div>
+  <div class="tab" data-v="cost" data-role="admin" style="--tc:#B45309;--tcl:#FBEAD0">Cost report</div>
 </div>
 
 <div class="wrap">
@@ -351,6 +379,15 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
     </div>
     <div class="panel" style="margin-top:15px"><div class="panel-h"><h3>DEV availability</h3></div><div class="panel-b flush"><div class="tbl-wrap"><table id="attTbl"></table></div></div></div>
   </div>
+
+  <div class="view" id="v-cost">
+    <div class="note"><span>₹</span><span>External cost = per-design fee from the <b>Cost</b> sheet by capacity bracket. Internal cost = <b>SSE Cost</b> (₹/kW) × design capacity. Revision rule: same-designer revisions 1–2 free, 3rd+ charged; a revision by a different designer is charged as a revision design.</span></div>
+    <div class="kpis" id="costKpis"></div>
+    <div class="grid g-2">
+      <div class="panel"><div class="panel-h"><h3>Internal designers (DE) — cost</h3><span class="hint">click a name for monthly cost</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="costIntTbl"></table></div></div></div>
+      <div class="panel"><div class="panel-h"><h3>External designers (ODE) — cost</h3><span class="hint">click a name for monthly cost</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="costExtTbl"></table></div></div></div>
+    </div>
+  </div>
 </div>
 
 <div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
@@ -361,7 +398,7 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 <script>
 /* ====== CONFIG ====== */
 const SHEET_ID="1g6vGbVMAaLKnJI06F-xKVskKcE862EelVC_CKSH7U6c";
-const GIDS={master:"1484820577",design:"392178120",attendance:"1387164875",checkinout:"854609223",users:"76549870"};
+const GIDS={master:"1484820577",design:"392178120",attendance:"1387164875",checkinout:"854609223",users:"76549870",cost:"1878892621"};
 const APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbx3Owv3vO9qq1plv4mJXC8GOw0cxoauqSTKEoNzlxDxLJRqEcAdjYFdKUJjyPfq5b4T/exec"; // deployed Apps Script feed
 var DEV_TAT_START="DEV Accepted timestamp"; // change to "Asssigned Time_Stamp" if you prefer
 const ONSITE_KM=0.5, TODAY=new Date("2026-06-26");
@@ -472,7 +509,7 @@ function buildFilters(){
 }
 document.addEventListener("click",()=>$$(".ms-pop").forEach(x=>x.classList.remove("open")));
 function clearFilters(){Object.keys(FILTERS).forEach(k=>FILTERS[k]=[]);$$(".ms-opts input").forEach(i=>i.checked=false);$$(".ms-btn").forEach(b=>{b.classList.remove("has");const v=b.querySelector(".ms-val");if(v)v.textContent="All";});renderAll();}
-function filtered(){return DATA.leads.filter(L=>FDEF.every(f=>!FILTERS[f.key].length||f.match(L,FILTERS[f.key])));}
+function filtered(){let arr=DATA.leads;if(window._roleFilter)arr=arr.filter(window._roleFilter);return arr.filter(L=>FDEF.every(f=>!FILTERS[f.key].length||f.match(L,FILTERS[f.key])));}
 
 /* ====== render building blocks ====== */
 function kpi(lbl,val,sub,accent,onClick){return `<div class="kpi ${onClick?'':'static'}" style="--accent:${accent}" ${onClick?`onclick="${onClick}"`:''}><div class="lbl">${lbl}</div><div class="val">${val}</div>${sub?`<div class="sub">${sub}</div>`:""}</div>`;}
@@ -1174,9 +1211,102 @@ $("#calType").addEventListener("change",()=>{if($("#calDesigner"))$("#calDesigne
 $("#calDesigner").addEventListener("change",renderCalendar);
 $("#projSearch").addEventListener("input",renderProjects);
 
+/* ====== LOGIN + ROLES ====== */
+let CURRENT_USER=null, ROLE=null;
+const TAB_ACCESS={
+  admin:null,
+  designlead:["overview","funnel","map","dev","design","pending","tat","calendar","cohort","projects","team"],
+  devlead:["overview","funnel","map","dev","calendar","projects"],
+  dev:["overview","funnel","map","dev","calendar","projects"],
+  designer:["overview","funnel","map","design","pending","tat","calendar","cohort","projects"],
+  viewer:["overview","projects"]
+};
+function roleOf(at){at=String(at||"").toLowerCase();
+  if(/admin/.test(at))return"admin";
+  if(/design\s*lead/.test(at))return"designlead";
+  if(/dev\s*lead/.test(at))return"devlead";
+  if(/\bdev\b/.test(at))return"dev";
+  if(/\bde\b|ode|design/.test(at))return"designer";
+  return"viewer";}
+function loginReady(){$("#loginMsg").textContent=`${(DATA.usersFull||[]).length} users loaded · sign in with your email & password`;$("#loginBtn").disabled=false;}
+function doLogin(){
+  const email=$("#loginEmail").value.trim().toLowerCase(),pass=$("#loginPass").value;
+  if(!email||!pass){$("#loginErr").textContent="Enter email and password.";return;}
+  const u=(DATA.usersFull||[]).find(x=>String(pick(x,"User_Email","User Email","Email")).trim().toLowerCase()===email&&String(pick(x,"Password"))===pass);
+  if(!u){$("#loginErr").textContent="Invalid email or password.";return;}
+  CURRENT_USER={name:pick(u,"User Name","Name"),email,accessType:pick(u,"Access Type"),city:pick(u,"City")};
+  ROLE=roleOf(CURRENT_USER.accessType);
+  $("#loginErr").textContent="";$("#loginBg").classList.add("hide");
+  $(".userbox").innerHTML=`<b>${CURRENT_USER.name}</b><br><span>${CURRENT_USER.accessType||""}<span class="role">${ROLE}</span></span>`;
+  applyRole();buildFilters();renderAll();
+}
+function applyRole(){
+  const allowed=TAB_ACCESS[ROLE]||null;
+  $$(".tab").forEach(t=>{const v=t.dataset.v;t.style.display=(!allowed||allowed.includes(v))?"":"none";});
+  if(ROLE==="designer")window._roleFilter=x=>(x.designAll||[]).some(v=>v.designer===CURRENT_USER.name)||x.design.assignedTo===CURRENT_USER.name;
+  else if(ROLE==="dev")window._roleFilter=x=>(x.devAll||[]).some(v=>v.devName===CURRENT_USER.name)||(x.dev&&x.dev.devName===CURRENT_USER.name);
+  else window._roleFilter=null;
+  const act=$(".tab.active");if(act&&act.style.display==="none")go("overview");
+}
+
+/* ====== COST REPORT (admin) ====== */
+const fmtMoney=n=>"₹"+Math.round(n||0).toLocaleString("en-IN");
+function parseBracket(s){const m=String(s).match(/(\d+)\s*(?:[-–]|to)\s*(\d+)/i);if(m)return[+m[1],+m[2]];const m2=String(s).match(/(\d+)/);return m2?[0,+m2[1]]:[0,1e9];}
+let COST_EXT={};
+function buildCostIndex(){COST_EXT={};(DATA.cost||[]).forEach(r=>{const d=pick(r,"Designer","Vendore","Vendor","Designer Name","Name");if(!d)return;const[lo,hi]=parseBracket(pick(r,"Size bracket","Size Bracket","Size","Bracket","Capacity bracket"));const cost=parseFloat(String(pick(r,"Cost","Amount","Price","Rate")).replace(/[^0-9.]/g,""))||0;(COST_EXT[d]=COST_EXT[d]||[]).push({lo,hi,cost});});Object.values(COST_EXT).forEach(a=>a.sort((x,y)=>x.lo-y.lo));}
+function extCost(designer,cap){let a=COST_EXT[designer];if(!a){const k=Object.keys(COST_EXT).find(k=>norm(k)===norm(designer));a=k?COST_EXT[k]:null;}if(!a||!a.length)return 0;const row=a.find(b=>cap>=b.lo&&cap<=b.hi)||a[a.length-1];return row?row.cost:0;}
+function internalRate(name){const u=(DATA.usersFull||[]).find(u=>norm(pick(u,"User Name","Name"))===norm(name));if(!u)return 0;return parseFloat(String(pick(u,"SSE Cost","SSE_Cost","Cost")).replace(/[^0-9.]/g,""))||0;}
+function intCost(name,cap){return Math.round(internalRate(name)*cap);}
+function computeCost(leads){
+  const ext={},int={};const get=(store,name,type)=>store[name]||(store[name]={name,type,leads:new Set(),dCount:0,rCount:0,dCost:0,rCost:0});
+  leads.forEach(L=>{const capL=(L.design&&L.design.finalCap>0)?L.design.finalCap:L.capacity;let prev=null,sameCount=0;
+    (L.designAll||[]).forEach((v,i)=>{
+      if(v.status!=="Completed"||v.cancelled){if(i===0)prev=v.designer;return;}
+      const name=v.designer;if(!name||name==="—"){prev=name;return;}
+      const isExt=v.type==="External";const store=isExt?ext:int;const s=get(store,name,v.type);s.leads.add(L.id);
+      const unit=isExt?extCost(name,v.cap||capL):intCost(name,v.cap||capL);
+      if(i===0){s.dCount++;s.dCost+=unit;prev=name;sameCount=0;}
+      else{s.rCount++;if(name===prev){sameCount++;if(sameCount>=3)s.rCost+=unit;}else{s.rCost+=unit;sameCount=0;}prev=name;}
+    });
+  });
+  return {ext,int};
+}
+function renderCost(){
+  if(ROLE&&ROLE!=="admin")return;
+  buildCostIndex();const L=filtered();const {ext,int}=computeCost(L);
+  const sum=o=>Object.values(o).reduce((a,s)=>a+s.dCost+s.rCost,0);
+  const intT=sum(int),extT=sum(ext);
+  $("#costKpis").innerHTML=kpi("Internal cost",fmtMoney(intT),"DE · ₹/kW × capacity","var(--blue)")+kpi("External cost",fmtMoney(extT),"vendor bracket fees","var(--teal)")+kpi("Total design cost",fmtMoney(intT+extT),"design + revision","var(--ink)")+kpi("Designers billed",Object.keys(int).length+Object.keys(ext).length,"","var(--solar)");
+  $("#costIntTbl").className="mtbl";$("#costExtTbl").className="mtbl";
+  $("#costIntTbl").innerHTML=costTbl(int);$("#costExtTbl").innerHTML=costTbl(ext);
+}
+function costTbl(store){const list=Object.values(store).sort((a,b)=>(b.dCost+b.rCost)-(a.dCost+a.rCost));
+  const rows=list.map(s=>`<tr><td class="ml"><a class="link" onclick='openCostDetail(${JSON.stringify(s.name)})'>${s.name}</a></td><td>${s.leads.size}</td><td>${s.dCount}</td><td>${s.rCount}</td><td class="mono">${fmtMoney(s.dCost)}</td><td class="mono">${fmtMoney(s.rCost)}</td><td class="mono"><b>${fmtMoney(s.dCost+s.rCost)}</b></td></tr>`).join("");
+  const tot=list.reduce((a,s)=>({l:a.l+s.leads.size,d:a.d+s.dCount,r:a.r+s.rCount,dc:a.dc+s.dCost,rc:a.rc+s.rCost}),{l:0,d:0,r:0,dc:0,rc:0});
+  return `<thead><tr><th class="ml" style="text-align:left">Designer</th><th>Leads done</th><th>Designs</th><th>Revisions</th><th>Design cost</th><th>Revision cost</th><th>Total</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="muted" style="padding:18px;text-align:center">No data.</td></tr>'}</tbody><tfoot><tr style="font-weight:700;background:#F7F9FB"><td class="ml">Total</td><td>${tot.l}</td><td>${tot.d}</td><td>${tot.r}</td><td class="mono">${fmtMoney(tot.dc)}</td><td class="mono">${fmtMoney(tot.rc)}</td><td class="mono">${fmtMoney(tot.dc+tot.rc)}</td></tr></tfoot>`;
+}
+function openCostDetail(name){
+  const L=filtered();const M={};const get=k=>M[k]||(M[k]={d:0,r:0,cost:0,ids:new Set()});
+  L.forEach(lead=>{const capL=(lead.design&&lead.design.finalCap>0)?lead.design.finalCap:lead.capacity;let prev=null,sameCount=0;
+    (lead.designAll||[]).forEach((v,i)=>{
+      if(v.status!=="Completed"||v.cancelled){if(i===0)prev=v.designer;return;}
+      const isExt=v.type==="External";const unit=isExt?extCost(v.designer,v.cap||capL):intCost(v.designer,v.cap||capL);
+      let billable;if(i===0){billable=true;}else{if(v.designer===prev){sameCount++;billable=sameCount>=3;}else{billable=true;sameCount=0;}}
+      const wasPrev=prev;prev=v.designer;
+      if(v.designer!==name)return;
+      const mk=monthKey(v.completed)||"—";const r=get(mk);if(i>0)r.r++;else r.d++;if(billable)r.cost+=unit;r.ids.add(lead.id);
+    });
+  });
+  const months=Object.keys(M).sort();
+  const body=`<div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">Month</th><th>Designs</th><th>Revisions</th><th>Cost</th></tr></thead><tbody>`+
+   (months.length?months.map(k=>{const r=M[k];return `<tr><td class="ml"><b>${k==="—"?"—":monthLbl(k)}</b></td><td>${r.d}</td><td>${r.r}</td><td class="mono"><span class="mc-n" onclick='drillSet(${JSON.stringify([...r.ids])},"${name} ${k==="—"?"":monthLbl(k)}")'>${fmtMoney(r.cost)}</span></td></tr>`;}).join("")
+     :`<tr><td colspan="4" class="muted" style="padding:18px;text-align:center">No completed designs.</td></tr>`)+`</tbody></table></div>`;
+  showModal("Cost — "+name,"monthly completed designs & cost · click a cost for projects",body);
+}
+
 function renderAll(){
   _cardSets=[];
-  const steps=[["overview",renderOverview],["insights",renderInsights],["monthly",renderMonthly],["designerSummary",renderDesignerSummary],["funnel",renderFunnel],["leadBreak",renderLeadBreak],["dev",renderDev],["design",renderDesign],["pending",renderPending],["tat",renderTat],["cohort",renderCohort],["projects",renderProjects],["team",renderTeam]];
+  const steps=[["overview",renderOverview],["insights",renderInsights],["monthly",renderMonthly],["designerSummary",renderDesignerSummary],["funnel",renderFunnel],["leadBreak",renderLeadBreak],["dev",renderDev],["design",renderDesign],["pending",renderPending],["tat",renderTat],["cohort",renderCohort],["projects",renderProjects],["team",renderTeam],["cost",renderCost]];
   steps.forEach(([n,fn])=>{try{fn();}catch(e){console.error("render["+n+"] failed:",e);}});
   if(map){try{drawMarkers();}catch(e){console.error("map failed:",e);}}
 }
@@ -1307,16 +1437,16 @@ async function loadData(){
     const res=await fetch(APPS_SCRIPT_URL);
     if(!res.ok)throw new Error("Apps Script HTTP "+res.status);
     const j=await res.json();
-    return {master:j.master||[],design:j.design||[],users:j.users||[],att:j.attendance||[]};
+    return {master:j.master||[],design:j.design||[],users:j.users||[],att:j.attendance||[],cost:j.cost||[]};
   }
-  const [master,design,users,att]=await Promise.all([
-    fetchCsv(GIDS.master),fetchCsv(GIDS.design),fetchCsv(GIDS.users).catch(()=>[]),fetchCsv(GIDS.attendance).catch(()=>[])]);
-  return {master,design,users,att};
+  const [master,design,users,att,cost]=await Promise.all([
+    fetchCsv(GIDS.master),fetchCsv(GIDS.design),fetchCsv(GIDS.users).catch(()=>[]),fetchCsv(GIDS.attendance).catch(()=>[]),fetchCsv(GIDS.cost).catch(()=>[])]);
+  return {master,design,users,att,cost};
 }
 async function toggleConnect(){
   $("#updstamp").textContent="Connecting…";$("#connBtn").classList.remove("live");
   try{
-    const {master,design,users,att}=await loadData();
+    const {master,design,users,att,cost}=await loadData();
     const M=Array.isArray(master)?master:[],D=Array.isArray(design)?design:[];
     if(!M.length)throw new Error("Master sheet empty / unreachable");
     const dByLead={};D.forEach(r=>{const b=String(pick(r,"Lead ID")||"").trim();if(b)(dByLead[b]=dByLead[b]||[]).push(r);});
@@ -1327,12 +1457,16 @@ async function toggleConnect(){
     }
     if(!leads.length)throw new Error("0 leads mapped — check the header row is row 1");
     DATA.leads=leads;
+    DATA.usersFull=Array.isArray(users)?users:[];
+    DATA.cost=Array.isArray(cost)?cost:[];
     if(Array.isArray(users)&&users.length)DATA.users=users.map(u=>({id:pick(u,"User_ID"),name:pick(u,"User Name","Name"),role:(pick(u,"Access Type")||"").toUpperCase().includes("ODE")?"ODE":((pick(u,"Access Type")||"").toUpperCase().replace("DEV","").includes("DE")?"DE":"DEV"),city:pick(u,"City")}));
     if(Array.isArray(att)&&att.length)DATA.attendance=att.map(a=>({name:pick(a,"DEV Name"),present:/present/i.test(pick(a,"Present","Attendance Day status"))?"Present":(pick(a,"Leave")?"Leave":"—"),avail:pick(a,"Availablity")||"—"}));
-    buildFilters();renderAll();
+    buildFilters();if(CURRENT_USER)applyRole();renderAll();
     $("#connBtn").classList.add("live");$("#updstamp").textContent=`Updated ${new Date().toLocaleString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})} · ${leads.length} leads · ${D.length} design rows${skipped?` · ${skipped} skipped`:""}`;
+    if(!CURRENT_USER)loginReady();
   }catch(e){
     $("#updstamp").textContent="Couldn't load — Refresh the tab. ("+e.message+")";
+    $("#loginMsg").textContent="Couldn't load users — check the sheet / Apps Script.";
     console.error(e);
   }
 }
