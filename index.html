@@ -728,7 +728,9 @@ function renderLegend(){const items=mapMode==="city"?Object.entries(CITY_COL):ma
 
 /* ====== DEV table ====== */
 function drillBreakIds(ids,title){const L=leadsByIds(ids);showModal(title,`${L.length} lead(s) · pick a dimension`,drillBreak(L,title));}
-function cardKpi(lbl,arr,sub,accent){return kpi(lbl,arr.length,sub,accent,`drillBreakIds(${JSON.stringify(arr.map(a=>a.id))},"${lbl.replace(/"/g,"")}")`);}
+let _cardSets=[];
+function cardKpi(lbl,arr,sub,accent){const i=_cardSets.push({ids:arr.map(a=>a.id),title:lbl})-1;return kpi(lbl,arr.length,sub,accent,`drillBreakSet(${i})`);}
+function drillBreakSet(i){const c=_cardSets[i];if(!c)return;drillBreakIds(c.ids,c.title);}
 function renderDev(){const Lall=filtered();
   const devLeads=Lall.filter(x=>x.devReq==="Yes");
   const done=devLeads.filter(x=>x.dev&&x.dev.finalStatus==="Completed");
@@ -1123,6 +1125,7 @@ $("#calDesigner").addEventListener("change",renderCalendar);
 $("#projSearch").addEventListener("input",renderProjects);
 
 function renderAll(){
+  _cardSets=[];
   const steps=[["overview",renderOverview],["insights",renderInsights],["monthly",renderMonthly],["designerSummary",renderDesignerSummary],["funnel",renderFunnel],["leadBreak",renderLeadBreak],["dev",renderDev],["design",renderDesign],["pending",renderPending],["tat",renderTat],["cohort",renderCohort],["projects",renderProjects],["team",renderTeam]];
   steps.forEach(([n,fn])=>{try{fn();}catch(e){console.error("render["+n+"] failed:",e);}});
   if(map){try{drawMarkers();}catch(e){console.error("map failed:",e);}}
