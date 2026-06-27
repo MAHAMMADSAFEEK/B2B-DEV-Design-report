@@ -1274,10 +1274,11 @@ function billableUnits(leads){
 }
 function computeCost(leads){
   const units=billableUnits(leads);const ext={},int={};
-  const get=(store,name,type)=>store[name]||(store[name]={name,type,leads:new Set(),dCount:0,rCount:0,dCost:0,rCost:0});
+  const get=(store,name,type)=>store[name]||(store[name]={name,type,leads:new Set(),dCount:0,rCount:0,dCost:0,rCost:0,kw:0});
   const intMonth={};
   units.forEach(u=>{const store=u.type==="External"?ext:int;const s=get(store,u.designer,u.type);s.leads.add(u.leadId);
     if(u.isRev)s.rCount++;else s.dCount++;
+    if(u.billable)s.kw+=u.cap;
     if(u.type==="External"){const c=u.billable?extCost(u.designer,u.cap):0;if(u.isRev)s.rCost+=c;else s.dCost+=c;}
     else if(u.billable){const m=intMonth[u.designer]=intMonth[u.designer]||{};const mm=m[u.month]=m[u.month]||{kw:0,units:[]};mm.kw+=u.cap;mm.units.push(u);}
   });
@@ -1295,9 +1296,11 @@ function renderCost(){
   $("#costIntTbl").innerHTML=costTbl(int);$("#costExtTbl").innerHTML=costTbl(ext);
 }
 function costTbl(store){const list=Object.values(store).sort((a,b)=>(b.dCost+b.rCost)-(a.dCost+a.rCost));
-  const rows=list.map(s=>`<tr><td class="ml"><a class="link" onclick='openCostDetail(${JSON.stringify(s.name)})'>${s.name}</a></td><td>${s.leads.size}</td><td>${s.dCount}</td><td>${s.rCount}</td><td class="mono">${fmtMoney(s.dCost)}</td><td class="mono">${fmtMoney(s.rCost)}</td><td class="mono"><b>${fmtMoney(s.dCost+s.rCost)}</b></td></tr>`).join("");
-  const tot=list.reduce((a,s)=>({l:a.l+s.leads.size,d:a.d+s.dCount,r:a.r+s.rCount,dc:a.dc+s.dCost,rc:a.rc+s.rCost}),{l:0,d:0,r:0,dc:0,rc:0});
-  return `<thead><tr><th class="ml" style="text-align:left">Designer</th><th>Leads done</th><th>Designs</th><th>Revisions</th><th>Design cost</th><th>Revision cost</th><th>Total</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="muted" style="padding:18px;text-align:center">No data.</td></tr>'}</tbody><tfoot><tr style="font-weight:700;background:#F7F9FB"><td class="ml">Total</td><td>${tot.l}</td><td>${tot.d}</td><td>${tot.r}</td><td class="mono">${fmtMoney(tot.dc)}</td><td class="mono">${fmtMoney(tot.rc)}</td><td class="mono">${fmtMoney(tot.dc+tot.rc)}</td></tr></tfoot>`;
+  const rows=list.map(s=>{const tc=s.dCost+s.rCost;const perKw=s.kw>0?tc/s.kw:0;
+    return `<tr><td class="ml"><a class="link" onclick='openCostDetail(${JSON.stringify(s.name)})'>${s.name}</a></td><td>${s.leads.size}</td><td>${s.dCount}</td><td>${s.rCount}</td><td class="mono">${fmtMoney(s.dCost)}</td><td class="mono">${fmtMoney(s.rCost)}</td><td class="mono"><b>${fmtMoney(tc)}</b></td><td class="mono">${s.kw>0?fmtMoney(perKw):"—"}</td></tr>`;}).join("");
+  const tot=list.reduce((a,s)=>({l:a.l+s.leads.size,d:a.d+s.dCount,r:a.r+s.rCount,dc:a.dc+s.dCost,rc:a.rc+s.rCost,kw:a.kw+s.kw}),{l:0,d:0,r:0,dc:0,rc:0,kw:0});
+  const totC=tot.dc+tot.rc;
+  return `<thead><tr><th class="ml" style="text-align:left">Designer</th><th>Leads done</th><th>Designs</th><th>Revisions</th><th>Design cost</th><th>Revision cost</th><th>Total</th><th>₹/kW</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="muted" style="padding:18px;text-align:center">No data.</td></tr>'}</tbody><tfoot><tr style="font-weight:700;background:#F7F9FB"><td class="ml">Total</td><td>${tot.l}</td><td>${tot.d}</td><td>${tot.r}</td><td class="mono">${fmtMoney(tot.dc)}</td><td class="mono">${fmtMoney(tot.rc)}</td><td class="mono">${fmtMoney(totC)}</td><td class="mono">${tot.kw>0?fmtMoney(totC/tot.kw):"—"}</td></tr></tfoot>`;
 }
 function openCostDetail(name){
   const L=filtered();const units=billableUnits(L).filter(u=>u.designer===name);
@@ -1446,7 +1449,9 @@ async function loadData(){
     const res=await fetch(APPS_SCRIPT_URL);
     if(!res.ok)throw new Error("Apps Script HTTP "+res.status);
     const j=await res.json();
-    return {master:j.master||[],design:j.design||[],users:j.users||[],att:j.attendance||[],cost:j.cost||[]};
+    let cost=j.cost||[];
+    if(!cost.length){try{cost=await fetchCsv(GIDS.cost);}catch(e){console.warn("cost csv fallback failed",e);}}
+    return {master:j.master||[],design:j.design||[],users:j.users||[],att:j.attendance||[],cost};
   }
   const [master,design,users,att,cost]=await Promise.all([
     fetchCsv(GIDS.master),fetchCsv(GIDS.design),fetchCsv(GIDS.users).catch(()=>[]),fetchCsv(GIDS.attendance).catch(()=>[]),fetchCsv(GIDS.cost).catch(()=>[])]);
