@@ -241,6 +241,8 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 .login-card button:disabled{background:#94A3B8;cursor:not-allowed}
 .login-err{font-size:12.5px;color:var(--red);min-height:16px}
 .userbox .role{display:inline-block;font-size:9px;background:rgba(255,255,255,.18);padding:1px 6px;border-radius:5px;margin-left:5px;letter-spacing:.04em}
+.mback{cursor:pointer;font-size:26px;line-height:1;color:#9FB3C8;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:.12s}
+.mback:hover{background:rgba(255,255,255,.12);color:#fff}
 </style>
 </head>
 <body>
@@ -391,7 +393,7 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 </div>
 
 <div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
-  <div class="modal"><div class="modal-h"><div><h3 id="mTitle" style="font-size:16px"></h3><div id="mSub" class="mono" style="font-size:12px;color:#9FB3C8;margin-top:3px"></div></div><span class="x" onclick="closeModal()">×</span></div>
+  <div class="modal"><div class="modal-h"><div style="display:flex;align-items:center;gap:11px"><span class="mback" id="mBack" onclick="modalBack()" title="Back" style="display:none">‹</span><div><h3 id="mTitle" style="font-size:16px"></h3><div id="mSub" class="mono" style="font-size:12px;color:#9FB3C8;margin-top:3px"></div></div></div><span class="x" onclick="closeModal()">×</span></div>
   <div class="modal-b" id="mBody"></div></div>
 </div>
 
@@ -733,8 +735,15 @@ function drillDim(dim,btn){
      return `<tr><td><b>${k}</b></td><td><a class="link" onclick='drillSet(${JSON.stringify(arr.map(a=>a.id))},"${String(k).replace(/"/g,"")}")'>${arr.length}</a></td><td style="color:${col};font-weight:600">${pct}%</td></tr>`;}).join("")+`</tbody></table></div>`;
   document.getElementById("drillBody").innerHTML=html;
 }
-function showModal(title,sub,html){$("#mTitle").textContent=title;$("#mSub").textContent=sub;$("#mBody").innerHTML=html;$("#modal").classList.add("show");
+let _modalStack=[];
+function showModal(title,sub,html){const m=$("#modal");
+  if(m.classList.contains("show")){_modalStack.push({title:$("#mTitle").textContent,sub:$("#mSub").textContent,html:$("#mBody").innerHTML});}
+  $("#mTitle").textContent=title;$("#mSub").textContent=sub;$("#mBody").innerHTML=html;m.classList.add("show");
+  updateModalBack();
   const t=document.getElementById("drillTabs");if(t)drillDim("city",t.querySelector("button"));}
+function updateModalBack(){const b=document.getElementById("mBack");if(b)b.style.display=_modalStack.length?"flex":"none";}
+function modalBack(){const s=_modalStack.pop();if(!s){closeModal();return;}
+  $("#mTitle").textContent=s.title;$("#mSub").textContent=s.sub;$("#mBody").innerHTML=s.html;updateModalBack();}
 function drillSet(ids,title){const L=leadsByIds(ids);showModal(title,`${L.length} project(s) · click a row for journey / DEV / design`,drillTable(L));}
 function drillCity(c){const L=filtered().filter(x=>x.city===c);showModal("City — "+c,`${L.length} lead(s)`,drillBreak(L,c));}
 function drillCat(c){const L=filtered().filter(x=>x.cat===c);showModal("Category — "+c,`${L.length} lead(s)`,drillBreak(L,c));}
@@ -1201,7 +1210,7 @@ function openDesignOutput(id,idx){const L=DATA.leads.find(x=>x.id===id);if(!L||!
       :`<tr><td colspan="2" class="muted" style="padding:18px;text-align:center">No output fields.</td></tr>`)+`</tbody></table></div>`;
   showModal(`${v.rev} — design output`,`${L.project} · ${L.id}`,body);}
 function closeModalKeep(){}
-function closeModal(){$("#modal").classList.remove("show");}
+function closeModal(){_modalStack=[];$("#modal").classList.remove("show");const b=document.getElementById("mBack");if(b)b.style.display="none";}
 
 /* ====== nav ====== */
 $$(".tab").forEach(t=>t.onclick=()=>{$$(".tab").forEach(x=>x.classList.remove("active"));t.classList.add("active");const v=t.dataset.v;$$(".view").forEach(x=>x.classList.remove("active"));$("#v-"+v).classList.add("active");if(v==="map"){initMap();setTimeout(()=>map.invalidateSize(),60);}if(v==="calendar")renderCalendar();});
