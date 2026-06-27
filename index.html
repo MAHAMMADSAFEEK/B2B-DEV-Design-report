@@ -381,7 +381,7 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
   </div>
 
   <div class="view" id="v-cost">
-    <div class="note"><span>₹</span><span>External cost = per-design fee from the <b>Cost</b> sheet by capacity bracket. Internal cost = <b>SSE Cost</b> (₹/kW) × design capacity. Revision rule: same-designer revisions 1–2 free, 3rd+ charged; a revision by a different designer is charged as a revision design.</span></div>
+    <div class="note"><span>₹</span><span>External cost = flat per-design fee from the <b>Cost</b> sheet by capacity bracket. Internal cost = the designer's <b>monthly salary</b> (SSE Cost) allocated across that month's billable designs by capacity (₹/kW = salary ÷ month's billable kW). Revision rule: same-designer revisions 1–2 free, 3rd+ billed; a revision by a different designer is billed as a revision design.</span></div>
     <div class="kpis" id="costKpis"></div>
     <div class="grid g-2">
       <div class="panel"><div class="panel-h"><h3>Internal designers (DE) — cost</h3><span class="hint">click a name for monthly cost</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="costIntTbl"></table></div></div></div>
@@ -1257,18 +1257,32 @@ function buildCostIndex(){COST_EXT={};(DATA.cost||[]).forEach(r=>{const d=pick(r
 function extCost(designer,cap){let a=COST_EXT[designer];if(!a){const k=Object.keys(COST_EXT).find(k=>norm(k)===norm(designer));a=k?COST_EXT[k]:null;}if(!a||!a.length)return 0;const row=a.find(b=>cap>=b.lo&&cap<=b.hi)||a[a.length-1];return row?row.cost:0;}
 function internalRate(name){const u=(DATA.usersFull||[]).find(u=>norm(pick(u,"User Name","Name"))===norm(name));if(!u)return 0;return parseFloat(String(pick(u,"SSE Cost","SSE_Cost","Cost")).replace(/[^0-9.]/g,""))||0;}
 function intCost(name,cap){return Math.round(internalRate(name)*cap);}
-function computeCost(leads){
-  const ext={},int={};const get=(store,name,type)=>store[name]||(store[name]={name,type,leads:new Set(),dCount:0,rCount:0,dCost:0,rCost:0});
+function billableUnits(leads){
+  const units=[];
   leads.forEach(L=>{const capL=(L.design&&L.design.finalCap>0)?L.design.finalCap:L.capacity;let prev=null,sameCount=0;
     (L.designAll||[]).forEach((v,i)=>{
       if(v.status!=="Completed"||v.cancelled){if(i===0)prev=v.designer;return;}
       const name=v.designer;if(!name||name==="—"){prev=name;return;}
-      const isExt=v.type==="External";const store=isExt?ext:int;const s=get(store,name,v.type);s.leads.add(L.id);
-      const unit=isExt?extCost(name,v.cap||capL):intCost(name,v.cap||capL);
-      if(i===0){s.dCount++;s.dCost+=unit;prev=name;sameCount=0;}
-      else{s.rCount++;if(name===prev){sameCount++;if(sameCount>=3)s.rCost+=unit;}else{s.rCost+=unit;sameCount=0;}prev=name;}
+      const isRev=i>0;let billable;
+      if(i===0){billable=true;sameCount=0;}
+      else{if(name===prev){sameCount++;billable=sameCount>=3;}else{billable=true;sameCount=0;}}
+      prev=name;
+      units.push({leadId:L.id,designer:name,type:v.type,cap:(v.cap||capL),isRev,month:monthKey(v.completed)||"—",billable});
     });
   });
+  return units;
+}
+function computeCost(leads){
+  const units=billableUnits(leads);const ext={},int={};
+  const get=(store,name,type)=>store[name]||(store[name]={name,type,leads:new Set(),dCount:0,rCount:0,dCost:0,rCost:0});
+  const intMonth={};
+  units.forEach(u=>{const store=u.type==="External"?ext:int;const s=get(store,u.designer,u.type);s.leads.add(u.leadId);
+    if(u.isRev)s.rCount++;else s.dCount++;
+    if(u.type==="External"){const c=u.billable?extCost(u.designer,u.cap):0;if(u.isRev)s.rCost+=c;else s.dCost+=c;}
+    else if(u.billable){const m=intMonth[u.designer]=intMonth[u.designer]||{};const mm=m[u.month]=m[u.month]||{kw:0,units:[]};mm.kw+=u.cap;mm.units.push(u);}
+  });
+  Object.entries(intMonth).forEach(([name,months])=>{const salary=internalRate(name);const s=int[name];if(!s)return;
+    Object.values(months).forEach(mm=>{const rate=mm.kw>0?salary/mm.kw:0;mm.units.forEach(u=>{const c=rate*u.cap;if(u.isRev)s.rCost+=c;else s.dCost+=c;});});});
   return {ext,int};
 }
 function renderCost(){
@@ -1286,22 +1300,17 @@ function costTbl(store){const list=Object.values(store).sort((a,b)=>(b.dCost+b.r
   return `<thead><tr><th class="ml" style="text-align:left">Designer</th><th>Leads done</th><th>Designs</th><th>Revisions</th><th>Design cost</th><th>Revision cost</th><th>Total</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="muted" style="padding:18px;text-align:center">No data.</td></tr>'}</tbody><tfoot><tr style="font-weight:700;background:#F7F9FB"><td class="ml">Total</td><td>${tot.l}</td><td>${tot.d}</td><td>${tot.r}</td><td class="mono">${fmtMoney(tot.dc)}</td><td class="mono">${fmtMoney(tot.rc)}</td><td class="mono">${fmtMoney(tot.dc+tot.rc)}</td></tr></tfoot>`;
 }
 function openCostDetail(name){
-  const L=filtered();const M={};const get=k=>M[k]||(M[k]={d:0,r:0,cost:0,ids:new Set()});
-  L.forEach(lead=>{const capL=(lead.design&&lead.design.finalCap>0)?lead.design.finalCap:lead.capacity;let prev=null,sameCount=0;
-    (lead.designAll||[]).forEach((v,i)=>{
-      if(v.status!=="Completed"||v.cancelled){if(i===0)prev=v.designer;return;}
-      const isExt=v.type==="External";const unit=isExt?extCost(v.designer,v.cap||capL):intCost(v.designer,v.cap||capL);
-      let billable;if(i===0){billable=true;}else{if(v.designer===prev){sameCount++;billable=sameCount>=3;}else{billable=true;sameCount=0;}}
-      const wasPrev=prev;prev=v.designer;
-      if(v.designer!==name)return;
-      const mk=monthKey(v.completed)||"—";const r=get(mk);if(i>0)r.r++;else r.d++;if(billable)r.cost+=unit;r.ids.add(lead.id);
-    });
-  });
+  const L=filtered();const units=billableUnits(L).filter(u=>u.designer===name);
+  const isExt=units.length?units[0].type==="External":false;
+  const M={};units.forEach(u=>{const r=M[u.month]=M[u.month]||{d:0,r:0,cost:0,kw:0,ids:new Set()};if(u.isRev)r.r++;else r.d++;r.ids.add(u.leadId);
+    if(u.billable){if(isExt)r.cost+=extCost(name,u.cap);else r.kw+=u.cap;}});
+  if(!isExt){const salary=internalRate(name);Object.values(M).forEach(r=>{r.cost=r.kw>0?salary:0;});}
   const months=Object.keys(M).sort();
+  const sub=isExt?"external · flat bracket fee per design":`internal · monthly salary ${fmtMoney(internalRate(name))} allocated by capacity`;
   const body=`<div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">Month</th><th>Designs</th><th>Revisions</th><th>Cost</th></tr></thead><tbody>`+
    (months.length?months.map(k=>{const r=M[k];return `<tr><td class="ml"><b>${k==="—"?"—":monthLbl(k)}</b></td><td>${r.d}</td><td>${r.r}</td><td class="mono"><span class="mc-n" onclick='drillSet(${JSON.stringify([...r.ids])},"${name} ${k==="—"?"":monthLbl(k)}")'>${fmtMoney(r.cost)}</span></td></tr>`;}).join("")
      :`<tr><td colspan="4" class="muted" style="padding:18px;text-align:center">No completed designs.</td></tr>`)+`</tbody></table></div>`;
-  showModal("Cost — "+name,"monthly completed designs & cost · click a cost for projects",body);
+  showModal("Cost — "+name,sub,body);
 }
 
 function renderAll(){
