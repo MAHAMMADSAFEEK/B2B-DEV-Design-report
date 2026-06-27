@@ -124,6 +124,7 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 .p-green{background:var(--green-l);color:#127538}.p-green .d{background:var(--green)}
 .p-red{background:var(--red-l);color:#B91C1C}.p-red .d{background:var(--red)}
 .p-amber{background:var(--amber-l);color:#A85B05}.p-amber .d{background:var(--amber)}
+.p-purple{background:#ECE8FA;color:#5B47B0}.p-purple .d{background:#6E59C7}
 .p-blue{background:var(--blue-l);color:#1D4FAB}.p-blue .d{background:var(--blue)}
 .p-gray{background:#EEF1F4;color:#5A6B7E}.p-gray .d{background:#94A3B8}
 .cat{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10.5px;font-weight:600;color:#fff}
@@ -189,6 +190,7 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 .jr-strip b{color:var(--txt);font-weight:600}
 .jr-note{margin-top:9px;background:rgba(0,0,0,.04);border-radius:7px;padding:8px 11px;font-size:12px;color:var(--txt-2)}
 .jr-arrow{text-align:center;color:var(--line-2);font-size:16px;margin:-6px 0 6px}
+.jsum{background:#F4F8FE;border:1px solid #CFE0F6;border-left:4px solid var(--blue);border-radius:10px;padding:11px 14px;margin-bottom:16px;font-size:13px;line-height:1.55;color:var(--txt)}
 /* cohort */
 .cohort td.hm{font-family:'IBM Plex Mono';font-weight:500}
 .heat{text-align:center;font-family:'IBM Plex Mono';font-weight:500}
@@ -419,6 +421,10 @@ function enrich(L){
   d.target=d.cancelled?0:SLA.first[L.cat].design;
   d.slaState=d.cancelled?"—":d.status!=="Completed"?"—":d.target===0?"Manual":d.designTat==null?"—":d.designTat<=d.target?"On time":"Delayed";
   d.variance=(d.target&&d.designTat!=null)?Math.round((d.designTat-d.target)*10)/10:null;
+  // granular pending: original not done = "Design pending"; original done but revision open = "Revision pending"
+  if(d.status==="Pending"){const orig=(d._all&&d._all[0])?d._all[0]:null;const origDone=orig?!!orig.completed:(d.revisions>0);d.pendKind=origDone?"Revision pending":"Design pending";}
+  else d.pendKind=null;
+  d.statusLabel=d.status==="Completed"?(d.cancelled?"Cancelled":"Completed"):(d.pendKind||d.status);
   d.assignedTo=(d.designer&&d.designer!=="—")?d.designer:null;
   if(d.status==="Pending"&&d.assigned)d.ageDays=Math.round(dayDiff(d.assigned,TODAY.toISOString().slice(0,10)));
   else if(d.status==="Pending")d.ageDays=Math.round(dayDiff(L.hoto,TODAY.toISOString().slice(0,10)));
@@ -440,7 +446,7 @@ const FDEF=[
     return v.some(s=>{
       if(s==="Required")return x.devReqState==="Required"; if(s==="Not required")return x.devReqState==="Not required"; if(s==="Not assigned")return x.devReqState==="Not assigned";
       if(s==="DEV completed")return x.dev&&x.dev.finalStatus==="Completed"; if(s==="DEV pending")return x.dev&&!["Completed","Cancelled"].includes(x.dev.finalStatus); if(s==="DEV cancelled")return x.dev&&x.dev.finalStatus==="Cancelled";});}},
- {key:"dsnStatus",label:"Design status",get:()=>["Completed","Pending","Cancelled"],disp:v=>v,match:(x,v)=>v.includes(x.design.status)},
+ {key:"dsnStatus",label:"Design status",get:()=>["Completed","Design pending","Revision pending","Cancelled"],disp:v=>v,match:(x,v)=>{const s=Array.isArray(v)?v:[v];return s.some(o=>o==="Completed"?(x.design.status==="Completed"&&!x.design.cancelled):o==="Cancelled"?x.design.cancelled:o===x.design.pendKind);}},
  {key:"assigned",label:"Assignment",get:()=>["Assigned","Not assigned"],disp:v=>v,match:(x,v)=>v.some(s=>s==="Assigned"?!!x.design.assignedTo:!x.design.assignedTo)},
  {key:"designer",label:"Designer",get:l=>[...new Set(l.map(x=>x.design.assignedTo).filter(Boolean))].sort(),disp:v=>v,match:(x,v)=>v.includes(x.design.assignedTo)},
  {key:"type",label:"Int / Ext",get:()=>["Internal","External"],disp:v=>v,match:(x,v)=>v.includes(x.design.type)},
@@ -472,7 +478,8 @@ function filtered(){return DATA.leads.filter(L=>FDEF.every(f=>!FILTERS[f.key].le
 function kpi(lbl,val,sub,accent,onClick){return `<div class="kpi ${onClick?'':'static'}" style="--accent:${accent}" ${onClick?`onclick="${onClick}"`:''}><div class="lbl">${lbl}</div><div class="val">${val}</div>${sub?`<div class="sub">${sub}</div>`:""}</div>`;}
 function barRow(label,val,max,color,onClick){const w=max?Math.max(4,val/max*100):0;return `<div class="bar-row" ${onClick?`onclick="${onClick}"`:''}><span>${label}</span><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}">${val}</div></div><span class="muted">${max?Math.round(val/max*100)+'%':''}</span></div>`;}
 function statusPill(s){const m={Completed:"p-green",Rescheduled:"p-amber",Cancelled:"p-red",Pending:"p-blue","On time":"p-green",Delayed:"p-red","—":"p-gray",
-  "Project not updated":"p-gray","DEV not required":"p-gray","DEV assign pending":"p-blue","DEV waiting for accept":"p-amber","DEV rejected":"p-red","DEV scheduled":"p-blue"};return `<span class="pill ${m[s]||'p-gray'}"><span class="d"></span>${s}</span>`;}
+  "Project not updated":"p-gray","DEV not required":"p-gray","DEV assign pending":"p-blue","DEV waiting for accept":"p-amber","DEV rejected":"p-red","DEV scheduled":"p-blue",
+  "Design pending":"p-amber","Revision pending":"p-purple"};return `<span class="pill ${m[s]||'p-gray'}"><span class="d"></span>${s}</span>`;}
 function avgOf(arr){return arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1):"—";}
 
 /* ====== OVERVIEW ====== */
@@ -764,7 +771,7 @@ function renderDesign(){const L=filtered();
     cardKpi("With revisions",revLeads,`${L.reduce((a,x)=>a+(x.design.revisions||0),0)} total revisions`,"var(--blue)");
   $("#dsnTbl").innerHTML=`<thead><tr><th>Lead / Project</th><th>Size</th><th>Designer</th><th>Type</th><th>Revisions</th><th>Status</th><th>TAT vs target</th><th></th></tr></thead><tbody>`+
    L.map(L0=>{const d=L0.design;let tat='<span class="muted">—</span>';if(d.status==="Completed"){if(d.target===0)tat='<span class="pill p-gray"><span class="d"></span>manual</span>';else{const c=d.variance>0?"over":"under";tat=`<span class="tat-cell">${d.designTat}d / ${d.target}d <span class="${c}">(${d.variance>0?'+':''}${d.variance})</span></span>`;}}else if(d.status==="Cancelled"){tat=`<span style="color:var(--red);font-size:11.5px">${d.cancelReason||d.instType}</span>`;}
-     return `<tr><td><b>${L0.project}</b><br><span class="mono muted" style="font-size:10px">${L0.id}</span></td><td><span class="cat cat-${L0.cat}">${L0.cat}</span></td><td>${d.designer}</td><td><span class="pill ${d.type==='Internal'?'p-blue':'p-gray'}"><span class="d"></span>${d.type}</span></td><td>${d.revisions}</td><td>${statusPill(d.status)}</td><td>${tat}</td><td><a class="link" onclick='openLead("${L0.id}","dsn")'>Design →</a></td></tr>`;}).join("")+`</tbody>`;
+     return `<tr><td><b>${L0.project}</b><br><span class="mono muted" style="font-size:10px">${L0.id}</span></td><td><span class="cat cat-${L0.cat}">${L0.cat}</span></td><td>${d.designer}</td><td><span class="pill ${d.type==='Internal'?'p-blue':'p-gray'}"><span class="d"></span>${d.type}</span></td><td>${d.revisions}</td><td>${statusPill(d.statusLabel)}</td><td>${tat}</td><td><a class="link" onclick='openLead("${L0.id}","dsn")'>Design →</a></td></tr>`;}).join("")+`</tbody>`;
   // designer-wise report (internal + external combined)
   const S=designerStats();const rows=Object.values(S).sort((a,b)=>uniq([...b.dA,...b.rA]).length-uniq([...a.dA,...a.rA]).length);
   const numC=(ids,lbl)=>{const u=uniq(ids);return u.length?`<span class="mc-n" onclick='drillSet(${JSON.stringify(u)},"${lbl.replace(/"/g,"")}")'>${u.length}</span>`:'<span class="mc-n z">0</span>';};
@@ -1033,6 +1040,20 @@ function jrDsnCard(L,d){
   return `<div class="jrcard dsn"><div class="jr-top"><div class="jr-title"><span class="jr-tag dsn">DESIGN</span>${d.rev||"Design"} — ${d.designer||"—"} <span class="pill ${d.type==='Internal'?'p-blue':'p-gray'}" style="margin-left:4px"><span class="d"></span>${d.type||""}</span></div>${statusPill(d.status)}</div>
     <div class="jr-strip"><span>📅 Assigned: <b>${d.assigned||"—"}</b></span><span>✅ Completed: <b>${d.completed||"—"}</b></span><span>⏱ Net TAT: <b>${d.tat==null?"—":d.tat+"d"}</b>${d.holdDays?` <span class="muted">(−${d.holdDays}d hold)</span>`:""}</span>${d.target?`<span>🎯 Target: <b>${d.target}d</b>${sla}</span>`:`<span>${sla}</span>`}</div>${note}</div>`;
 }
+function journeySummary(L){
+  const nDev=(L.devAll||[]).length,nDsn=(L.designAll||[]).length,d=L.design;
+  let s;
+  if(L.devReq==="Yes"){const devDone=L.dev&&L.dev.finalStatus==="Completed";
+    s=`<b>DEV required</b> — site-visit pathway. ${nDev} DEV visit${nDev!==1?"s":""}${devDone?" (completed)":" ("+(L.dev?L.dev.finalStatus:"pending")+")"}. `;
+    s+=L.capacityUpdated?`Design data received after capacity update. `:(devDone?`Design started after DEV completion. `:`Design awaiting DEV completion. `);
+  }else if(L.devReq==="No"){s=`<b>DEV not required</b> — satellite-based design (no site visit). `;}
+  else{s=`<b>DEV requirement not updated</b> yet. `;}
+  s+=`${nDsn} design version${nDsn!==1?"s":""}${d.revisions>0?` (incl. ${d.revisions} revision${d.revisions>1?"s":""})`:""} — current status: <b>${d.statusLabel||d.status}</b>.`;
+  if(L.dev&&d.assigned&&L.dev.completedDate&&String(d.assigned)<String(L.dev.completedDate))
+    s+=` <span style="color:var(--amber)">Note: design started before DEV completed (DEV required later).</span>`;
+  if(d.cancelled)s+=` <span style="color:var(--red)">Marked area-not-fit / cancelled — counted as done.</span>`;
+  return s;
+}
 function renderJourney(L){
   const items=[];
   items.push({type:"recv",date:L.hoto||"",t:"HOTO received",m:`${L.city||""}${L.addr?" · "+L.addr:""} · ${L.cat} · ${L.capacity}kWp · DEV ${L.devReq==="Yes"?"required":L.devReq==="No"?"not required":"not updated"}`});
@@ -1049,7 +1070,8 @@ function renderJourney(L){
   (L.designAll||[]).forEach(d=>items.push({type:"dsn",date:d.completed||d.assigned||drcv||"",t:`Design ${d.rev||""} — ${d.designer||"—"} (${d.type||""}) · ${d.status}`,m:`assigned ${d.assigned||"—"} → completed ${d.completed||"—"} · net TAT ${d.tat==null?"—":d.tat+"d"}${d.holdDays?` (−${d.holdDays}d hold)`:""}${d.sla&&d.sla!=="—"?" · "+d.sla:""}${d.note?" · "+d.note:""}`}));
   const fixed=items.slice(0,1);const flow=items.slice(1).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
   const all=[...fixed,...flow];
-  return `<div class="tl">`+all.map(i=>`<div class="tl-it ${i.type==="dev"?"jdev":i.type==="dsn"?"jdsn":i.type==="recvd"?"jrcv":""}"><div class="t">${i.t}</div><div class="m">${i.m}</div></div>`).join("")+`</div>`;
+  const tl=`<div class="tl">`+all.map(i=>`<div class="tl-it ${i.type==="dev"?"jdev":i.type==="dsn"?"jdsn":i.type==="recvd"?"jrcv":""}"><div class="t">${i.t}</div><div class="m">${i.m}</div></div>`).join("")+`</div>`;
+  return `<div class="jsum">${journeySummary(L)}</div>`+tl;
 }
 function openLead(id,focus){const L=DATA.leads.find(x=>x.id===id);if(!L)return;
   $("#mTitle").textContent=L.project;$("#mSub").textContent=`${L.id} · ${L.city} · ${L.capacity}kWp · ${L.cat}`;
@@ -1061,9 +1083,12 @@ function leadTab(id,tab){const L=DATA.leads.find(x=>x.id===id);$$("#mBody .dtab 
   else if(tab==="dev"){if(!L.dev){B.innerHTML=`<div class="muted">DEV not required for this lead.</div>`;return;}const d=L.dev;
     B.innerHTML=`<div class="kv"><div class="k">DEV engineer</div><div class="v">${d.devName}</div><div class="k">Final status</div><div class="v">${statusPill(d.finalStatus)}</div><div class="k">Client permission</div><div class="v">${d.permission}</div><div class="k">Completed</div><div class="v">${d.completedDate||"—"}</div><div class="k">Reschedules</div><div class="v">${d.reschedules}</div><div class="k">Hold during DEV</div><div class="v">${d.holdDays?`${d.holdDays} d (${d.holdStart} → ${d.holdEnd})`:"—"}</div><div class="k">Reason for hold</div><div class="v">${d.holdReason||"—"}</div><div class="k">DEV TAT (gross)</div><div class="v">${fmt(d.grossTat)} days</div><div class="k">DEV TAT (net of hold)</div><div class="v"><b>${fmt(d.devTat)} days</b></div><div class="k">Distance from site</div><div class="v">${d.distKm==null?"—":d.distKm+" km ("+(d.onsite?"on-site":"off-site")+")"}</div></div>
      <h4 style="font-size:13px;margin:16px 0 8px">Visit attempts</h4><div class="tbl-wrap"><table><thead><tr><th>#</th><th>Scheduled</th><th>Result</th><th>Timestamp</th><th>Lat-Long</th></tr></thead><tbody>${d.blocks.map((b,i)=>`<tr><td>${i+1}</td><td>${b.sched}</td><td>${statusPill(b.connected)}</td><td class="mono" style="font-size:11px">${b.ts||"—"}</td><td class="mono" style="font-size:11px">${b.lat?b.lat+", "+b.lng:"—"}</td></tr>`).join("")}</tbody></table></div>`;}
-  else{const d=L.design;B.innerHTML=`<div class="kv"><div class="k">Designer</div><div class="v">${d.designer}</div><div class="k">Type</div><div class="v">${d.type}</div><div class="k">Status</div><div class="v">${statusPill(d.status)}</div><div class="k">Assigned</div><div class="v">${d.assigned||"—"}</div><div class="k">Completed</div><div class="v">${d.completed||"—"}</div><div class="k">Revisions</div><div class="v">${d.revisions}</div><div class="k">Final capacity</div><div class="v">${d.finalCap} kWp</div><div class="k">Installation</div><div class="v">${d.instType}</div>${d.status==="Cancelled"?`<div class="k">Cancellation remark</div><div class="v" style="color:var(--red)">${d.cancelReason||d.instType}</div>`:""}<div class="k">Design on hold</div><div class="v">${d.holdDays?`${d.holdDays} d (${d.holdStart} → ${d.holdEnd})`:"—"}</div><div class="k">Reason for hold</div><div class="v">${d.holdReason||"—"}</div><div class="k">Design TAT (gross)</div><div class="v">${d.grossTat==null?"—":d.grossTat+" days"}</div><div class="k">Design TAT (net of hold)</div><div class="v"><b>${d.designTat==null?"—":d.designTat+" days"}</b></div><div class="k">SLA target</div><div class="v">${d.target===0?"manual review":d.target+" days"}</div><div class="k">SLA result</div><div class="v">${d.status==="Completed"?statusPill(d.slaState)+(d.slaState==="Delayed"&&d.variance>0?` <b style="color:var(--red)">+${d.variance} days late</b>`:d.slaState==="On time"&&d.variance!=null?` <span class="muted">(${d.variance} d vs target)</span>`:""):"—"}</div></div>`+
-    `<h4 style="margin:18px 0 8px;font-size:13px">All design versions (latest first)</h4><div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">Version</th><th>Designer</th><th>Type</th><th>Status</th><th>Assigned</th><th>Completed</th><th>Net TAT</th><th>Target</th><th>SLA</th></tr></thead><tbody>`+
-    (L.designAll||[]).slice().reverse().map(v=>`<tr><td class="ml"><b>${v.rev||"—"}</b></td><td>${v.designer||"—"}</td><td>${v.type||"—"}</td><td>${statusPill(v.status)}</td><td class="mono" style="font-size:11px">${v.assigned||"—"}</td><td class="mono" style="font-size:11px">${v.completed||"—"}</td><td class="tat-cell">${v.tat==null?"—":v.tat+"d"}</td><td class="tat-cell">${v.target?v.target+"d":"—"}</td><td>${v.status==="Completed"&&v.sla&&v.sla!=="—"?statusPill(v.sla):"—"}</td></tr>`).join("")+`</tbody></table></div>`;}
+  else{const d=L.design;B.innerHTML=`<div class="kv"><div class="k">Designer</div><div class="v">${d.designer}</div><div class="k">Type</div><div class="v">${d.type}</div><div class="k">Status</div><div class="v">${statusPill(d.statusLabel)}</div><div class="k">Assigned</div><div class="v">${d.assigned||"—"}</div><div class="k">Completed</div><div class="v">${d.completed||"—"}</div><div class="k">Revisions</div><div class="v">${d.revisions}</div><div class="k">Final capacity</div><div class="v">${d.finalCap} kWp</div><div class="k">Installation</div><div class="v">${d.instType}</div>${d.status==="Cancelled"?`<div class="k">Cancellation remark</div><div class="v" style="color:var(--red)">${d.cancelReason||d.instType}</div>`:""}<div class="k">Design on hold</div><div class="v">${d.holdDays?`${d.holdDays} d (${d.holdStart} → ${d.holdEnd})`:"—"}</div><div class="k">Reason for hold</div><div class="v">${d.holdReason||"—"}</div><div class="k">Design TAT (gross)</div><div class="v">${d.grossTat==null?"—":d.grossTat+" days"}</div><div class="k">Design TAT (net of hold)</div><div class="v"><b>${d.designTat==null?"—":d.designTat+" days"}</b></div><div class="k">SLA target</div><div class="v">${d.target===0?"manual review":d.target+" days"}</div><div class="k">SLA result</div><div class="v">${d.status==="Completed"?statusPill(d.slaState)+(d.slaState==="Delayed"&&d.variance>0?` <b style="color:var(--red)">+${d.variance} days late</b>`:d.slaState==="On time"&&d.variance!=null?` <span class="muted">(${d.variance} d vs target)</span>`:""):"—"}</div></div>`+
+    `<h4 style="margin:18px 0 8px;font-size:13px">All design versions (latest first)</h4><div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">Version</th><th>Designer</th><th>Type</th><th>Status</th><th>Assigned</th><th>Completed</th><th>Net TAT</th><th>Target</th><th>SLA</th><th>Output</th><th class="ml" style="text-align:left">Note</th></tr></thead><tbody>`+
+    (L.designAll||[]).slice().reverse().map((v,ri)=>{const idx=(L.designAll.length-1)-ri;
+      const link=v.driveLink?`<a class="minibtn" href="${v.driveLink}" target="_blank" rel="noopener">Open ↗</a>`:"";
+      const fields=v.raw?`<button class="minibtn" onclick='openDesignOutput("${L.id}",${idx})'>Fields ▸</button>`:"";
+      return `<tr><td class="ml"><b>${v.rev||"—"}</b></td><td>${v.designer||"—"}</td><td>${v.type||"—"}</td><td>${statusPill(v.status)}</td><td class="mono" style="font-size:11px">${v.assigned||"—"}</td><td class="mono" style="font-size:11px">${v.completed||"—"}</td><td class="tat-cell">${v.tat==null?"—":v.tat+"d"}</td><td class="tat-cell">${v.target?v.target+"d":"—"}</td><td>${v.status==="Completed"&&v.sla&&v.sla!=="—"?statusPill(v.sla):"—"}</td><td style="white-space:nowrap">${link}${fields}${!link&&!fields?'<span class="muted">—</span>':""}</td><td class="ml" style="font-size:11.5px;color:var(--txt-2)">${v.note||"—"}</td></tr>`;}).join("")+`</tbody></table></div>`;}
 }
 function openDevAll(id){const L=DATA.leads.find(x=>x.id===id);if(!L)return;const rows=L.devAll;
   if(!rows.length){showModal("DEV data — "+L.project,L.id,'<div class="muted">No DEV required / no DEV records for this lead.</div>');return;}
@@ -1076,6 +1101,17 @@ function openDesignAll(id){const L=DATA.leads.find(x=>x.id===id);if(!L)return;co
    rows.map(r=>{const sla=(r.sla&&r.sla!=="—")?statusPill(r.sla):(r.target===0?'<span class="pill p-gray"><span class="d"></span>manual</span>':'<span class="muted">—</span>');
      return `<tr><td><b>${r.rev}</b></td><td>${r.designer||"—"}</td><td>${r.type||"—"}</td><td class="mono" style="font-size:11px">${r.assigned||"—"}</td><td class="mono" style="font-size:11px">${r.completed||"—"}</td><td>${statusPill(r.status)}</td><td class="tat-cell">${r.tat==null?"—":r.tat+"d"}${r.holdDays?` <span class="muted">(−${r.holdDays}d hold)</span>`:""}</td><td>${sla}</td><td style="font-size:12px;color:var(--txt-2)">${r.note||"—"}</td></tr>`;}).join("")+`</tbody></table></div>`;
   showModal("Design data — "+L.project,`${L.id} · ${rows.length} version(s) incl. revisions`,body);}
+function openDesignOutput(id,idx){const L=DATA.leads.find(x=>x.id===id);if(!L||!L.designAll||!L.designAll[idx])return;
+  const v=L.designAll[idx];const r=v.raw||{};
+  const skip=new Set(["lead id","uniqueid"]);
+  const rows=Object.entries(r).filter(([k,val])=>String(val||"").trim()!==""&&!skip.has(String(k).toLowerCase().trim()));
+  const isUrl=s=>/^https?:\/\//i.test(String(s).trim());
+  const body=(v.driveLink?`<div style="margin-bottom:12px"><a class="minibtn" href="${v.driveLink}" target="_blank" rel="noopener" style="font-size:13px;padding:7px 14px">📂 Open design output (Drive) ↗</a></div>`:"")+
+    `<div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">Field</th><th class="ml" style="text-align:left">Value</th></tr></thead><tbody>`+
+    (rows.length?rows.map(([k,val])=>`<tr><td class="ml" style="color:var(--txt-2);white-space:nowrap">${k}</td><td class="ml">${isUrl(val)?`<a class="link" href="${String(val).trim()}" target="_blank" rel="noopener">${val} ↗</a>`:String(val)}</td></tr>`).join("")
+      :`<tr><td colspan="2" class="muted" style="padding:18px;text-align:center">No output fields.</td></tr>`)+`</tbody></table></div>`;
+  showModal(`${v.rev} — design output`,`${L.project} · ${L.id}`,body);}
+function closeModalKeep(){}
 function closeModal(){$("#modal").classList.remove("show");}
 
 /* ====== nav ====== */
@@ -1179,10 +1215,13 @@ function buildDesign(drows,m0){
   const all=drows.map((r,i)=>{const completed=isoDate(pick(r,"Design completed on","Completed time"));const inst=pick(r,"Installation Type");
     const cancelled=/area not fit|cancel/i.test(inst);const assigned=isoDate(pick(r,"Assigned time"));
     const hs=isoDate(pick(r,"Design On Hold")),he=isoDate(pick(r,"Design Unhold"));
+    let driveLink=pick(r,"Drive link","Drive Link","Design Drive Link","Design Link","Output Link","Final Design Link","Design Output Link","Design Output","Link","Drive");
+    if(!driveLink){for(const k in r){const v=String(r[k]||"");if(/^https?:\/\/\S+/i.test(v)){driveLink=v.match(/https?:\/\/\S+/)[0];break;}}}
     return {rev:i===0?"Original":"Revision R"+i,designer:pick(r,"Assigned Designer")||"—",type:/ext|ode/i.test(pick(r,"Designer Type"))?"External":"Internal",
       assigned,completed,cancelled,status:(cancelled||completed)?"Completed":"Pending",
       tat:cancelled?null:dayDiff(assigned,completed),holdDays:(hs&&he)?Math.max(0,dayDiff(hs,he)):0,
-      cap:parseFloat(pick(r,"Capacity"))||0,note:cancelled?(pick(r,"Design Delay Reason")||inst):pick(r,"Design Delay Reason"),instType:inst};});
+      cap:parseFloat(pick(r,"Capacity"))||0,note:cancelled?(pick(r,"Design Delay Reason")||inst):pick(r,"Design Delay Reason"),instType:inst,
+      driveLink,raw:r};});
   const latest=all[all.length-1];const finalCap=[...all].reverse().find(x=>x.cap>0)?.cap||0;
   const last=drows[drows.length-1];const anyCancel=all.some(x=>x.cancelled);
   return {type:latest.type,designer:latest.designer,assigned:all[0].assigned,completed:latest.completed,
