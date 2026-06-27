@@ -207,6 +207,8 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 .tl-it.jdsn::before{border-color:#16A34A;background:#16A34A}
 .tl-it.jdev .t{color:#1D4FAB}
 .tl-it.jdsn .t{color:#127538}
+.tl-it.jrcv::before{border-color:#6E59C7;background:#6E59C7}
+.tl-it.jrcv .t{color:#5B47B0}
 .dtab{display:flex;gap:6px;margin-bottom:14px}.dtab button{font:inherit;font-size:13px;border:1px solid var(--line-2);background:var(--surface);padding:6px 13px;border-radius:8px;cursor:pointer}.dtab button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .kv{display:grid;grid-template-columns:170px 1fr;gap:6px 14px;font-size:13px}.kv .k{color:var(--txt-2)}.kv .v{font-weight:500}
 .note{background:var(--amber-l);border:1px solid #F0D8A0;border-radius:var(--r);padding:11px 13px;font-size:12px;color:#8A6206;margin-bottom:15px;display:flex;gap:9px}
@@ -398,7 +400,7 @@ function enrich(L){
   L.devReqState=L.devReq==="Yes"?"Required":L.devReq==="No"?"Not required":"Not assigned";
   if(!L.devStatus)L.devStatus=L.dev?L.dev.finalStatus:(L.devReq==="No"?"DEV not required":L.devReq===""?"Project not updated":"DEV assign pending");
   // design clock start: DEV completed date (if DEV required) → else Capacity Updated date (J) → else HOTO
-  L.designStart=(L.devReq==="Yes")?(L.dev?L.dev.completedDate:null):(L.capacityUpdated||L.hoto);
+  L.designStart=L.capacityUpdated||((L.devReq==="Yes"&&L.dev)?L.dev.completedDate:null)||L.hoto;
   if(L.dev){const b=L.dev.blocks,eff=b[b.length-1];L.dev.effective=eff;
     L.dev.reschedules=b.filter(x=>x.connected==="Rescheduled").length;
     L.dev.completedDate=isoDate(eff.ts)||null;
@@ -413,16 +415,16 @@ function enrich(L){
   d.holdDays=(d.holdStart&&d.holdEnd)?Math.max(0,dayDiff(d.holdStart,d.holdEnd)):0;
   d.grossTat=grossD;
   d.designTat=grossD==null?null:Math.round((grossD-d.holdDays)*10)/10;
-  d.scenario=d.revisions>0?"revision":"first";
-  d.target=SLA.first[L.cat].design;
-  d.slaState=d.status!=="Completed"?"—":d.target===0?"Manual":d.designTat==null?"—":d.designTat<=d.target?"On time":"Delayed";
+  d.scenario=d.cancelled?"cancelled / area not fit":(d.revisions>0?"revision":"first");
+  d.target=d.cancelled?0:SLA.first[L.cat].design;
+  d.slaState=d.cancelled?"—":d.status!=="Completed"?"—":d.target===0?"Manual":d.designTat==null?"—":d.designTat<=d.target?"On time":"Delayed";
   d.variance=(d.target&&d.designTat!=null)?Math.round((d.designTat-d.target)*10)/10:null;
   d.assignedTo=(d.designer&&d.designer!=="—")?d.designer:null;
   if(d.status==="Pending"&&d.assigned)d.ageDays=Math.round(dayDiff(d.assigned,TODAY.toISOString().slice(0,10)));
   else if(d.status==="Pending")d.ageDays=Math.round(dayDiff(L.hoto,TODAY.toISOString().slice(0,10)));
   else d.ageDays=null;
   // all related records (revisions / re-visits) — synthesise from single record if no explicit history
-  L.devAll=(L.devHistory&&L.devHistory.length)?L.devHistory:(L.dev?[{rev:"Original DEV",devName:L.dev.devName,permission:L.dev.permission,completed:L.dev.completedDate,status:L.dev.finalStatus,reschedules:L.dev.reschedules,distKm:L.dev.distKm,onsite:L.dev.onsite,tat:L.dev.devTat,holdDays:L.dev.holdDays,note:""}]:[]);
+  L.devAll=(L.devHistory&&L.devHistory.length)?L.devHistory:(L.dev?[{rev:"Original DEV",devName:L.dev.devName,permission:L.dev.permission,assignedOn:L.dev.assignedOn,acceptedOn:L.dev.acceptedOn,blocks:L.dev.blocks,completed:L.dev.completedDate,status:L.dev.finalStatus,reschedules:L.dev.reschedules,distKm:L.dev.distKm,onsite:L.dev.onsite,tat:L.dev.devTat,holdDays:L.dev.holdDays,note:""}]:[]);
   L.designAll=(L.designHistory&&L.designHistory.length)?L.designHistory:[{rev:d.revisions>0?"Latest (R"+d.revisions+")":"Original",designer:d.designer,type:d.type,assigned:d.assigned,completed:d.completed,status:d.status,tat:d.designTat,target:d.target,sla:d.slaState,holdDays:d.holdDays,note:d.cancelReason||""}];
   return L;
 }
@@ -486,10 +488,10 @@ function renderOverview(){
   const devTats=L.filter(x=>x.dev&&x.dev.devTat!=null).map(x=>x.dev.devTat);
   const dsnTats=L.filter(x=>x.design.status==="Completed"&&x.design.designTat!=null).map(x=>x.design.designTat);
   $("#ovKpis").innerHTML=
-    kpi("Unique leads",L.length,"received","var(--solar)",`drill('city','All leads')`)+
-    kpi("DEV completed",devDone,`avg TAT ${avgOf(devTats)} d`,"var(--blue)",`drill('city','DEV completed','devDone')`)+
-    kpi("Design completed",dsnDone,`avg TAT ${avgOf(dsnTats)} d`,"var(--green)",`drill('city','Design completed','dsnDone')`)+
-    kpi("Design pending",L.filter(x=>x.design.status==="Pending").length,"open","var(--amber)",`go('pending')`);
+    cardKpi("Unique leads",L,"received","var(--solar)")+
+    cardKpi("DEV completed",L.filter(x=>x.dev&&x.dev.finalStatus==="Completed"),`avg TAT ${avgOf(devTats)} d`,"var(--blue)")+
+    cardKpi("Design completed",L.filter(x=>x.design.status==="Completed"),`avg TAT ${avgOf(dsnTats)} d`,"var(--green)")+
+    cardKpi("Design pending",L.filter(x=>x.design.status==="Pending"),"open","var(--amber)");
   renderCharts(L);
 }
 function renderCharts(L){
@@ -775,7 +777,7 @@ function renderDesign(){const L=filtered();
 /* ====== Pending ageing ====== */
 function renderPending(){const P=filtered().filter(x=>x.design.status==="Pending");
   const ages=P.map(x=>x.design.ageDays).filter(v=>v!=null);
-  $("#pendKpis").innerHTML=kpi("Pending designs",P.length,"open","var(--amber)")+kpi("Avg age",avgOf(ages)+"<small> d</small>","since assigned","var(--red)")+kpi("Oldest",ages.length?Math.max(...ages)+"<small> d</small>":"—","","var(--red)")+kpi("Unassigned",P.filter(x=>!x.design.assignedTo).length,"no designer","var(--blue)");
+  $("#pendKpis").innerHTML=cardKpi("Pending designs",P,"open","var(--amber)")+kpi("Avg age",avgOf(ages)+"<small> d</small>","since assigned","var(--red)")+kpi("Oldest",ages.length?Math.max(...ages)+"<small> d</small>":"—","","var(--red)")+cardKpi("Unassigned",P.filter(x=>!x.design.assignedTo),"no designer","var(--blue)");
   const grp=(keyFn,col)=>{const o={};P.forEach(x=>{const k=keyFn(x);o[k]=(o[k]||0)+1;});const mx=Math.max(1,...Object.values(o));return Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>barRow(k,v,mx,col)).join("")||'<div class="muted">None.</div>';};
   $("#pendCity").innerHTML=grp(x=>x.city,"var(--blue)");
   $("#pendDsn").innerHTML=grp(x=>x.design.assignedTo||"Unassigned","var(--teal)");
@@ -929,7 +931,8 @@ function renderProjects(){const q=($("#projSearch").value||"").toLowerCase();
    L.map(L0=>{const d=L0.design;const dev=L0.dev;
      const revisits=Math.max(0,(L0.devAll||[]).length-1);
      let delay='<span class="muted">—</span>';
-     if(d.status==="Completed"){if(d.target===0)delay='<span class="pill p-gray"><span class="d"></span>manual</span>';
+     if(d.cancelled)delay='<span class="pill p-gray"><span class="d"></span>area not fit / cancelled</span>';
+     else if(d.status==="Completed"){if(d.target===0)delay='<span class="pill p-gray"><span class="d"></span>manual</span>';
        else if(d.slaState==="On time")delay='<span class="pill p-green"><span class="d"></span>On time</span>';
        else if(d.slaState==="Delayed")delay=`<span class="pill p-red"><span class="d"></span>${d.variance} days delay</span>`;}
      else if(d.status==="Cancelled")delay='<span class="pill p-red"><span class="d"></span>Cancelled</span>';
@@ -959,7 +962,7 @@ function designerStats(leads,includeRoster){
     const n=v.designer;if(!n||n==="—")return;const s=get(n);if(!s.type)s.type=v.type||"Internal";
     const isRev=i>0;(isRev?s.rA:s.dA).push(L.id);
     if(v.status==="Completed"){(isRev?s.rC:s.dC).push(L.id);s.cap+=(v.cap||0);
-      if(tgt&&v.tat!=null){if(v.tat<=tgt)(isRev?s.onR:s.onD).push(L.id);else(isRev?s.dlR:s.dlD).push(L.id);}}
+      if(tgt&&v.tat!=null&&!v.cancelled){if(v.tat<=tgt)(isRev?s.onR:s.onD).push(L.id);else(isRev?s.dlR:s.dlD).push(L.id);}}
     else if(v.status!=="Cancelled"){s.pend.push(L.id);(isRev?s.pendR:s.pendD).push(L.id);}
   });});
   if(includeRoster!==false)(DATA.users||[]).filter(u=>u.role==="DE"||u.role==="ODE").forEach(u=>{const s=get(u.name);if(!s.type)s.type=u.role==="ODE"?"External":"Internal";});
@@ -975,7 +978,7 @@ function renderTeam(){
   const dsnDoneTotal=all.reduce((a,s)=>a+uniq([...s.dC,...s.rC]).length,0);
   $("#teamKpis").innerHTML=kpi("Designers",all.length,`${internal.length} internal · ${external.length} external`,"var(--solar)")
     +kpi("DEVs",devs.length,"field engineers","var(--blue)")
-    +kpi("Designs completed",dsnDoneTotal,"design + revision","var(--green)")
+    +cardKpi("Designs completed",filtered().filter(x=>x.design.status==="Completed"),"design + revision","var(--green)")
     +kpi("Idle designers",all.filter(s=>score(s)===0).length,"0 assigned","var(--amber)");
   const sub=(ids,label,cls,lbl)=>{const u=uniq(ids);return `<span class="mc-sub ${cls}" ${u.length?`onclick='drillSet(${JSON.stringify(u)},"${(lbl+" "+label).replace(/"/g,"")}")'`:""} style="cursor:${u.length?"pointer":"default"}">${label} ${u.length}</span>`;};
   const bcell=(dIds,rIds,lbl)=>{const tU=uniq([...dIds,...rIds]);
@@ -1031,12 +1034,22 @@ function jrDsnCard(L,d){
     <div class="jr-strip"><span>📅 Assigned: <b>${d.assigned||"—"}</b></span><span>✅ Completed: <b>${d.completed||"—"}</b></span><span>⏱ Net TAT: <b>${d.tat==null?"—":d.tat+"d"}</b>${d.holdDays?` <span class="muted">(−${d.holdDays}d hold)</span>`:""}</span>${d.target?`<span>🎯 Target: <b>${d.target}d</b>${sla}</span>`:`<span>${sla}</span>`}</div>${note}</div>`;
 }
 function renderJourney(L){
-  const items=[{type:"recv",date:L.hoto||"",t:"Lead received / HOTO",m:`${L.city||""}${L.addr?" · "+L.addr:""} · HOTO ${L.hoto||"—"} · DEV ${L.devReq==="Yes"?"required":L.devReq==="No"?"not required":"not updated"}`}];
-  (L.devAll||[]).forEach(d=>items.push({type:"dev",date:d.completed||d.permission||L.hoto||"",t:`${d.rev||"DEV"} — ${d.devName||"—"} · ${d.status}`,m:`permission ${d.permission||"—"} → completed ${d.completed||"—"} · net TAT ${d.tat==null?"—":d.tat+"d"}${d.reschedules?" · "+d.reschedules+" reschedule(s)":""}${d.distKm!=null?` · ${d.distKm}km ${d.onsite?"on-site":"off-site"}`:""}`}));
-  (L.designAll||[]).forEach(d=>items.push({type:"dsn",date:d.completed||d.assigned||L.hoto||"",t:`Design ${d.rev||""} — ${d.designer||"—"} (${d.type||""}) · ${d.status}`,m:`assigned ${d.assigned||"—"} → completed ${d.completed||"—"} · net TAT ${d.tat==null?"—":d.tat+"d"}${d.holdDays?` (−${d.holdDays}d hold)`:""}${d.sla&&d.sla!=="—"?" · "+d.sla:""}${d.note?" · "+d.note:""}`}));
-  const rest=items.slice(1).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-  const all=[items[0],...rest];
-  return `<div class="tl">`+all.map(i=>`<div class="tl-it ${i.type==="dev"?"jdev":i.type==="dsn"?"jdsn":""}"><div class="t">${i.t}</div><div class="m">${i.m}</div></div>`).join("")+`</div>`;
+  const items=[];
+  items.push({type:"recv",date:L.hoto||"",t:"HOTO received",m:`${L.city||""}${L.addr?" · "+L.addr:""} · ${L.cat} · ${L.capacity}kWp · DEV ${L.devReq==="Yes"?"required":L.devReq==="No"?"not required":"not updated"}`});
+  (L.devAll||[]).forEach(d=>{
+    const tag=(d.rev||"DEV");
+    if(d.assignedOn)items.push({type:"dev",date:d.assignedOn,t:`${tag} assigned — ${d.devName||"—"}`,m:`assigned on ${d.assignedOn}`});
+    if(d.acceptedOn)items.push({type:"dev",date:d.acceptedOn,t:`${tag} accepted (customer confirmed)`,m:`confirmed on ${d.acceptedOn}`});
+    (d.blocks||[]).forEach((b,bi)=>{if(!b||(!b.sched&&!b.ts&&b.connected==="Pending"))return;
+      items.push({type:"dev",date:b.sched||(b.ts?isoDate(b.ts):"")||d.acceptedOn||"",t:`${tag} ${bi===0?"scheduled":"re-scheduled "+bi} · ${b.connected}`,m:`${b.sched?"meeting "+b.sched:""}${b.ts?" · "+b.ts:""}`});});
+    items.push({type:"dev",date:d.completed||d.acceptedOn||"",t:`${tag} ${d.status}`,m:`completed ${d.completed||"—"} · net TAT ${d.tat==null?"—":d.tat+"d"}${d.holdDays?` (−${d.holdDays}d hold)`:""}${d.distKm!=null?` · ${d.distKm}km ${d.onsite?"on-site":"off-site"}`:""}`});
+  });
+  const drcv=L.designStart;const src=L.capacityUpdated?"capacity updated (J)":(L.devReq==="Yes"?"DEV completed":"HOTO");
+  items.push({type:"recvd",date:drcv||"",t:"Design data received",m:`${drcv||"—"} · source: ${src}`});
+  (L.designAll||[]).forEach(d=>items.push({type:"dsn",date:d.completed||d.assigned||drcv||"",t:`Design ${d.rev||""} — ${d.designer||"—"} (${d.type||""}) · ${d.status}`,m:`assigned ${d.assigned||"—"} → completed ${d.completed||"—"} · net TAT ${d.tat==null?"—":d.tat+"d"}${d.holdDays?` (−${d.holdDays}d hold)`:""}${d.sla&&d.sla!=="—"?" · "+d.sla:""}${d.note?" · "+d.note:""}`}));
+  const fixed=items.slice(0,1);const flow=items.slice(1).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const all=[...fixed,...flow];
+  return `<div class="tl">`+all.map(i=>`<div class="tl-it ${i.type==="dev"?"jdev":i.type==="dsn"?"jdsn":i.type==="recvd"?"jrcv":""}"><div class="t">${i.t}</div><div class="m">${i.m}</div></div>`).join("")+`</div>`;
 }
 function openLead(id,focus){const L=DATA.leads.find(x=>x.id===id);if(!L)return;
   $("#mTitle").textContent=L.project;$("#mSub").textContent=`${L.id} · ${L.city} · ${L.capacity}kWp · ${L.cat}`;
@@ -1048,7 +1061,9 @@ function leadTab(id,tab){const L=DATA.leads.find(x=>x.id===id);$$("#mBody .dtab 
   else if(tab==="dev"){if(!L.dev){B.innerHTML=`<div class="muted">DEV not required for this lead.</div>`;return;}const d=L.dev;
     B.innerHTML=`<div class="kv"><div class="k">DEV engineer</div><div class="v">${d.devName}</div><div class="k">Final status</div><div class="v">${statusPill(d.finalStatus)}</div><div class="k">Client permission</div><div class="v">${d.permission}</div><div class="k">Completed</div><div class="v">${d.completedDate||"—"}</div><div class="k">Reschedules</div><div class="v">${d.reschedules}</div><div class="k">Hold during DEV</div><div class="v">${d.holdDays?`${d.holdDays} d (${d.holdStart} → ${d.holdEnd})`:"—"}</div><div class="k">Reason for hold</div><div class="v">${d.holdReason||"—"}</div><div class="k">DEV TAT (gross)</div><div class="v">${fmt(d.grossTat)} days</div><div class="k">DEV TAT (net of hold)</div><div class="v"><b>${fmt(d.devTat)} days</b></div><div class="k">Distance from site</div><div class="v">${d.distKm==null?"—":d.distKm+" km ("+(d.onsite?"on-site":"off-site")+")"}</div></div>
      <h4 style="font-size:13px;margin:16px 0 8px">Visit attempts</h4><div class="tbl-wrap"><table><thead><tr><th>#</th><th>Scheduled</th><th>Result</th><th>Timestamp</th><th>Lat-Long</th></tr></thead><tbody>${d.blocks.map((b,i)=>`<tr><td>${i+1}</td><td>${b.sched}</td><td>${statusPill(b.connected)}</td><td class="mono" style="font-size:11px">${b.ts||"—"}</td><td class="mono" style="font-size:11px">${b.lat?b.lat+", "+b.lng:"—"}</td></tr>`).join("")}</tbody></table></div>`;}
-  else{const d=L.design;B.innerHTML=`<div class="kv"><div class="k">Designer</div><div class="v">${d.designer}</div><div class="k">Type</div><div class="v">${d.type}</div><div class="k">Status</div><div class="v">${statusPill(d.status)}</div><div class="k">Assigned</div><div class="v">${d.assigned||"—"}</div><div class="k">Completed</div><div class="v">${d.completed||"—"}</div><div class="k">Revisions</div><div class="v">${d.revisions}</div><div class="k">Final capacity</div><div class="v">${d.finalCap} kWp</div><div class="k">Installation</div><div class="v">${d.instType}</div>${d.status==="Cancelled"?`<div class="k">Cancellation remark</div><div class="v" style="color:var(--red)">${d.cancelReason||d.instType}</div>`:""}<div class="k">Design on hold</div><div class="v">${d.holdDays?`${d.holdDays} d (${d.holdStart} → ${d.holdEnd})`:"—"}</div><div class="k">Reason for hold</div><div class="v">${d.holdReason||"—"}</div><div class="k">Design TAT (gross)</div><div class="v">${d.grossTat==null?"—":d.grossTat+" days"}</div><div class="k">Design TAT (net of hold)</div><div class="v"><b>${d.designTat==null?"—":d.designTat+" days"}</b></div><div class="k">SLA target</div><div class="v">${d.target===0?"manual review":d.target+" days"}</div><div class="k">SLA result</div><div class="v">${d.status==="Completed"?statusPill(d.slaState)+(d.slaState==="Delayed"&&d.variance>0?` <b style="color:var(--red)">+${d.variance} days late</b>`:d.slaState==="On time"&&d.variance!=null?` <span class="muted">(${d.variance} d vs target)</span>`:""):"—"}</div></div>`;}
+  else{const d=L.design;B.innerHTML=`<div class="kv"><div class="k">Designer</div><div class="v">${d.designer}</div><div class="k">Type</div><div class="v">${d.type}</div><div class="k">Status</div><div class="v">${statusPill(d.status)}</div><div class="k">Assigned</div><div class="v">${d.assigned||"—"}</div><div class="k">Completed</div><div class="v">${d.completed||"—"}</div><div class="k">Revisions</div><div class="v">${d.revisions}</div><div class="k">Final capacity</div><div class="v">${d.finalCap} kWp</div><div class="k">Installation</div><div class="v">${d.instType}</div>${d.status==="Cancelled"?`<div class="k">Cancellation remark</div><div class="v" style="color:var(--red)">${d.cancelReason||d.instType}</div>`:""}<div class="k">Design on hold</div><div class="v">${d.holdDays?`${d.holdDays} d (${d.holdStart} → ${d.holdEnd})`:"—"}</div><div class="k">Reason for hold</div><div class="v">${d.holdReason||"—"}</div><div class="k">Design TAT (gross)</div><div class="v">${d.grossTat==null?"—":d.grossTat+" days"}</div><div class="k">Design TAT (net of hold)</div><div class="v"><b>${d.designTat==null?"—":d.designTat+" days"}</b></div><div class="k">SLA target</div><div class="v">${d.target===0?"manual review":d.target+" days"}</div><div class="k">SLA result</div><div class="v">${d.status==="Completed"?statusPill(d.slaState)+(d.slaState==="Delayed"&&d.variance>0?` <b style="color:var(--red)">+${d.variance} days late</b>`:d.slaState==="On time"&&d.variance!=null?` <span class="muted">(${d.variance} d vs target)</span>`:""):"—"}</div></div>`+
+    `<h4 style="margin:18px 0 8px;font-size:13px">All design versions (latest first)</h4><div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">Version</th><th>Designer</th><th>Type</th><th>Status</th><th>Assigned</th><th>Completed</th><th>Net TAT</th><th>Target</th><th>SLA</th></tr></thead><tbody>`+
+    (L.designAll||[]).slice().reverse().map(v=>`<tr><td class="ml"><b>${v.rev||"—"}</b></td><td>${v.designer||"—"}</td><td>${v.type||"—"}</td><td>${statusPill(v.status)}</td><td class="mono" style="font-size:11px">${v.assigned||"—"}</td><td class="mono" style="font-size:11px">${v.completed||"—"}</td><td class="tat-cell">${v.tat==null?"—":v.tat+"d"}</td><td class="tat-cell">${v.target?v.target+"d":"—"}</td><td>${v.status==="Completed"&&v.sla&&v.sla!=="—"?statusPill(v.sla):"—"}</td></tr>`).join("")+`</tbody></table></div>`;}
 }
 function openDevAll(id){const L=DATA.leads.find(x=>x.id===id);if(!L)return;const rows=L.devAll;
   if(!rows.length){showModal("DEV data — "+L.project,L.id,'<div class="muted">No DEV required / no DEV records for this lead.</div>');return;}
@@ -1148,6 +1163,8 @@ function devStatusForRow(r){
 }
 function devFromRow(r){
   return {devName:pick(r,"DEV Name"),permission:isoDate(pick(r,DEV_TAT_START,"DEV Accepted timestamp","Asssigned Time_Stamp")),
+    assignedOn:isoDate(pick(r,"Asssigned Time_Stamp","Assigned Time_Stamp","DEV Assigned timestamp","Assigned timestamp","DEV assigned timestamp")),
+    acceptedOn:isoDate(pick(r,"DEV Accepted timestamp","DEV Accepted","Customer confirmed on","DEV Accepted Time_Stamp")),
     blocks:devBlocks(r),finalStatus:devStatusForRow(r),
     rawStatus:pick(r,"DEV Status"),holdStart:isoDate(pick(r,"Hold During DEV")),holdEnd:isoDate(pick(r,"Unhold During DEV")),holdReason:pick(r,"Reason for Hold")};}
 function buildDesign(drows,m0){
@@ -1156,21 +1173,21 @@ function buildDesign(drows,m0){
     const cancelled=/area not fit|cancel/i.test(inst);
     return {type:/ext|ode/i.test(pick(m0,"Designer Type"))?"External":"Internal",designer:pick(m0,"Assigned Designer")||"—",
       assigned:isoDate(pick(m0,"Assigned Timestamp")),completed,revisions:+pick(m0,"No of Revisions")||0,
-      status:cancelled?"Cancelled":completed?"Completed":"Pending",finalCap:parseFloat(pick(m0,"Capacity"))||0,
-      instType:inst||"Rooftop",cancelReason:pick(m0,"DEV Delay Reason"),_all:[]};}
+      cancelled,status:(cancelled||completed)?"Completed":"Pending",finalCap:parseFloat(pick(m0,"Capacity"))||0,
+      instType:inst||"Rooftop",cancelReason:pick(m0,"DEV Delay Reason")||inst,_all:[]};}
   drows.sort((a,b)=>rvNum(pick(a,"UniqueID"))-rvNum(pick(b,"UniqueID")));
   const all=drows.map((r,i)=>{const completed=isoDate(pick(r,"Design completed on","Completed time"));const inst=pick(r,"Installation Type");
     const cancelled=/area not fit|cancel/i.test(inst);const assigned=isoDate(pick(r,"Assigned time"));
     const hs=isoDate(pick(r,"Design On Hold")),he=isoDate(pick(r,"Design Unhold"));
     return {rev:i===0?"Original":"Revision R"+i,designer:pick(r,"Assigned Designer")||"—",type:/ext|ode/i.test(pick(r,"Designer Type"))?"External":"Internal",
-      assigned,completed,status:cancelled?"Cancelled":completed?"Completed":"Pending",
-      tat:dayDiff(assigned,completed),holdDays:(hs&&he)?Math.max(0,dayDiff(hs,he)):0,
-      cap:parseFloat(pick(r,"Capacity"))||0,note:pick(r,"Design Delay Reason"),instType:inst};});
+      assigned,completed,cancelled,status:(cancelled||completed)?"Completed":"Pending",
+      tat:cancelled?null:dayDiff(assigned,completed),holdDays:(hs&&he)?Math.max(0,dayDiff(hs,he)):0,
+      cap:parseFloat(pick(r,"Capacity"))||0,note:cancelled?(pick(r,"Design Delay Reason")||inst):pick(r,"Design Delay Reason"),instType:inst};});
   const latest=all[all.length-1];const finalCap=[...all].reverse().find(x=>x.cap>0)?.cap||0;
-  const last=drows[drows.length-1];
+  const last=drows[drows.length-1];const anyCancel=all.some(x=>x.cancelled);
   return {type:latest.type,designer:latest.designer,assigned:all[0].assigned,completed:latest.completed,
-    revisions:all.length-1,status:all.some(x=>x.status==="Cancelled")?"Cancelled":(latest.completed?"Completed":"Pending"),
-    finalCap,instType:latest.instType||"Rooftop",cancelReason:pick(last,"Design Delay Reason"),
+    revisions:all.length-1,cancelled:anyCancel,status:(anyCancel||latest.completed)?"Completed":"Pending",
+    finalCap,instType:latest.instType||"Rooftop",cancelReason:pick(last,"Design Delay Reason")||latest.instType,
     holdStart:isoDate(pick(last,"Design On Hold")),holdEnd:isoDate(pick(last,"Design Unhold")),holdReason:pick(last,"Reason for Hold"),_all:all};}
 function buildLead(bid,rows,drows){
   rows=Array.isArray(rows)?rows:[];drows=Array.isArray(drows)?drows:[];
@@ -1183,7 +1200,7 @@ function buildLead(bid,rows,drows){
   const devRows=rows.filter(r=>/^\s*yes/i.test(pick(r,"DEV Requered ?","DEV Required ?","DEV Required","DEV Requered")));
   const devHistory=devRows.map((r,i)=>{const dv=devFromRow(r);const eff=dv.blocks.slice(-1)[0];const cd=isoDate(eff.ts)||null;
     const dk=haversine(lat,lng,eff.lat,eff.lng);const hold=(dv.holdStart&&dv.holdEnd)?Math.max(0,dayDiff(dv.holdStart,dv.holdEnd)):0;const g=dayDiff(dv.permission,cd);
-    return {rev:i===0?"Original DEV":"Re-visit R"+i,devName:dv.devName,permission:dv.permission,completed:cd,status:dv.finalStatus,
+    return {rev:i===0?"Original DEV":"Re-visit R"+i,devName:dv.devName,permission:dv.permission,assignedOn:dv.assignedOn,acceptedOn:dv.acceptedOn,blocks:dv.blocks,completed:cd,status:dv.finalStatus,
       reschedules:dv.blocks.filter(x=>x.connected==="Rescheduled").length,distKm:dk,onsite:dk==null?null:dk<=ONSITE_KM,
       tat:g==null?null:Math.round((g-hold)*10)/10,holdDays:hold,note:dv.rawStatus};});
   return enrich({id:bid,project:pick(m0,"Project name"),city:pick(m0,"City"),addr:pick(m0,"Address")||pick(m0,"Location of project"),
