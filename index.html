@@ -211,6 +211,8 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 .tl-it.jdsn .t{color:#127538}
 .tl-it.jrcv::before{border-color:#6E59C7;background:#6E59C7}
 .tl-it.jrcv .t{color:#5B47B0}
+.tl-it.jbad::before{border-color:var(--red)!important;background:var(--red)!important}
+.tl-it.jbad .t{color:var(--red)!important}
 .dtab{display:flex;gap:6px;margin-bottom:14px}.dtab button{font:inherit;font-size:13px;border:1px solid var(--line-2);background:var(--surface);padding:6px 13px;border-radius:8px;cursor:pointer}.dtab button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .kv{display:grid;grid-template-columns:170px 1fr;gap:6px 14px;font-size:13px}.kv .k{color:var(--txt-2)}.kv .v{font-weight:500}
 .note{background:var(--amber-l);border:1px solid #F0D8A0;border-radius:var(--r);padding:11px 13px;font-size:12px;color:#8A6206;margin-bottom:15px;display:flex;gap:9px}
@@ -477,7 +479,7 @@ function filtered(){return DATA.leads.filter(L=>FDEF.every(f=>!FILTERS[f.key].le
 /* ====== render building blocks ====== */
 function kpi(lbl,val,sub,accent,onClick){return `<div class="kpi ${onClick?'':'static'}" style="--accent:${accent}" ${onClick?`onclick="${onClick}"`:''}><div class="lbl">${lbl}</div><div class="val">${val}</div>${sub?`<div class="sub">${sub}</div>`:""}</div>`;}
 function barRow(label,val,max,color,onClick){const w=max?Math.max(4,val/max*100):0;return `<div class="bar-row" ${onClick?`onclick="${onClick}"`:''}><span>${label}</span><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}">${val}</div></div><span class="muted">${max?Math.round(val/max*100)+'%':''}</span></div>`;}
-function statusPill(s){const m={Completed:"p-green",Rescheduled:"p-amber",Cancelled:"p-red",Pending:"p-blue","On time":"p-green",Delayed:"p-red","—":"p-gray",
+function statusPill(s){const m={Completed:"p-green",Rescheduled:"p-amber",Cancelled:"p-red",Pending:"p-red","On time":"p-green",Delayed:"p-red","—":"p-gray",
   "Project not updated":"p-gray","DEV not required":"p-gray","DEV assign pending":"p-blue","DEV waiting for accept":"p-amber","DEV rejected":"p-red","DEV scheduled":"p-blue",
   "Design pending":"p-amber","Revision pending":"p-purple"};return `<span class="pill ${m[s]||'p-gray'}"><span class="d"></span>${s}</span>`;}
 function avgOf(arr){return arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1):"—";}
@@ -1064,15 +1066,16 @@ function renderJourney(L){
     if(d.assignedOn)items.push({type:"dev",date:d.assignedOn,t:`${tag} assigned — ${d.devName||"—"}`,m:`assigned on ${d.assignedOn}`});
     if(d.acceptedOn)items.push({type:"dev",date:d.acceptedOn,t:`${tag} accepted (customer confirmed)`,m:`confirmed on ${d.acceptedOn}`});
     (d.blocks||[]).forEach((b,bi)=>{if(!b||(!b.sched&&!b.ts&&b.connected==="Pending"))return;
-      items.push({type:"dev",date:b.sched||(b.ts?isoDate(b.ts):"")||d.acceptedOn||"",t:`${tag} ${bi===0?"scheduled":"re-scheduled "+bi} · ${b.connected}`,m:`${b.sched?"meeting "+b.sched:""}${b.ts?" · "+b.ts:""}`});});
-    items.push({type:"dev",date:d.completed||d.acceptedOn||"",t:`${tag} ${d.status}`,m:`completed ${d.completed||"—"} · net TAT ${d.tat==null?"—":d.tat+"d"}${d.holdDays?` (−${d.holdDays}d hold)`:""}${d.distKm!=null?` · ${d.distKm}km ${d.onsite?"on-site":"off-site"}`:""}`});
+      items.push({type:"dev",bad:/cancel|pending/i.test(b.connected),date:b.sched||(b.ts?isoDate(b.ts):"")||d.acceptedOn||"",t:`${tag} ${bi===0?"scheduled":"re-scheduled "+bi} · ${b.connected}`,m:`${b.sched?"meeting "+b.sched:""}${b.ts?" · "+b.ts:""}`});});
+    items.push({type:"dev",bad:d.status!=="Completed",date:d.completed||d.acceptedOn||"",t:`${tag} ${d.status}`,m:`completed ${d.completed||"—"} · net TAT ${d.tat==null?"—":d.tat+"d"}${d.holdDays?` (−${d.holdDays}d hold)`:""}${d.distKm!=null?` · ${d.distKm}km ${d.onsite?"on-site":"off-site"}`:""}`});
   });
   const drcv=L.designStart;const src=L.capacityUpdated?"capacity updated (J)":(L.devReq==="Yes"?"DEV completed":"HOTO");
   items.push({type:"recvd",date:drcv||"",t:"Design data received",m:`${drcv||"—"} · source: ${src}`});
-  (L.designAll||[]).forEach(d=>items.push({type:"dsn",date:d.completed||d.assigned||drcv||"",t:`Design ${d.rev||""} — ${d.designer||"—"} (${d.type||""}) · ${d.status}`,m:`assigned ${d.assigned||"—"} → completed ${d.completed||"—"} · net TAT ${d.tat==null?"—":d.tat+"d"}${d.holdDays?` (−${d.holdDays}d hold)`:""}${d.sla&&d.sla!=="—"?" · "+d.sla:""}${d.note?" · "+d.note:""}`}));
+  (L.designAll||[]).forEach(d=>{const canc=d.cancelled;const st=canc?"Cancelled":d.status;
+    items.push({type:"dsn",bad:canc||st!=="Completed",date:d.completed||d.assigned||drcv||"",t:`Design ${d.rev||""} — ${d.designer||"—"} (${d.type||""}) · ${st}`,m:`assigned ${d.assigned||"—"} → completed ${d.completed||"—"} · net TAT ${d.tat==null?"—":d.tat+"d"}${d.holdDays?` (−${d.holdDays}d hold)`:""}${d.sla&&d.sla!=="—"?" · "+d.sla:""}${d.note?" · "+d.note:""}`});});
   const fixed=items.slice(0,1);const flow=items.slice(1).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
   const all=[...fixed,...flow];
-  const tl=`<div class="tl">`+all.map(i=>`<div class="tl-it ${i.type==="dev"?"jdev":i.type==="dsn"?"jdsn":i.type==="recvd"?"jrcv":""}"><div class="t">${i.t}</div><div class="m">${i.m}</div></div>`).join("")+`</div>`;
+  const tl=`<div class="tl">`+all.map(i=>`<div class="tl-it ${i.type==="dev"?"jdev":i.type==="dsn"?"jdsn":i.type==="recvd"?"jrcv":""} ${i.bad?"jbad":""}"><div class="t">${i.t}</div><div class="m">${i.m}</div></div>`).join("")+`</div>`;
   return `<div class="jsum">${journeySummary(L)}</div>`+tl;
 }
 function openLead(id,focus){const L=DATA.leads.find(x=>x.id===id);if(!L)return;
