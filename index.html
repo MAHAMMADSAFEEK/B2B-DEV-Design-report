@@ -16,7 +16,7 @@
   --txt:#1A2433;--txt-2:#5A6B7E;--txt-3:#8A98A8;
   --solar:#F5A623;--blue:#2563C9;--blue-l:#E5EEFB;--green:#16A34A;--green-l:#E3F6EA;
   --red:#DC2626;--red-l:#FCE7E7;--amber:#D97706;--amber-l:#FEF1DC;--teal:#0E9488;--teal-l:#DCF4F1;
-  --r:10px;--r-lg:14px;--alpha:#2563C9;--beta:#0E9488;--gamma:#D97706;--omega:#9333EA;
+  --r:10px;--r-lg:14px;--resi:#16A34A;--alpha:#2563C9;--beta:#0E9488;--gamma:#D97706;--omega:#9333EA;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5}
@@ -128,7 +128,7 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 .p-blue{background:var(--blue-l);color:#1D4FAB}.p-blue .d{background:var(--blue)}
 .p-gray{background:#EEF1F4;color:#5A6B7E}.p-gray .d{background:#94A3B8}
 .cat{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10.5px;font-weight:600;color:#fff}
-.cat-Alpha{background:var(--alpha)}.cat-Beta{background:var(--beta)}.cat-Gamma{background:var(--gamma)}.cat-Omega{background:var(--omega)}
+.cat-Resi{background:var(--resi)}.cat-Alpha{background:var(--alpha)}.cat-Beta{background:var(--beta)}.cat-Gamma{background:var(--gamma)}.cat-Omega{background:var(--omega)}
 .bar-row{display:grid;grid-template-columns:130px 1fr 46px;align-items:center;gap:10px;margin-bottom:10px;font-size:12.5px;cursor:pointer}
 .bar-row:hover .bar-track{outline:2px solid var(--blue-l)}
 .bar-track{height:22px;background:#F1F4F7;border-radius:6px;overflow:hidden}
@@ -306,6 +306,7 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
       <div class="panel"><div class="panel-h"><h3>AGING — PENDING DESIGNS</h3><span class="det" onclick="go('pending')">Details ▸</span></div><div class="panel-b"><div class="chart-wrap tall"><canvas id="cAging"></canvas></div></div></div>
     </div>
     <div class="panel" style="margin-bottom:15px"><div class="panel-h"><h3>Insights</h3><span class="hint">what's going well · what needs attention</span></div><div class="panel-b" id="insights"></div></div>
+    <div class="panel" style="margin-bottom:15px"><div class="panel-h"><h3>PROJECT SIZE MIX</h3><span class="hint">share of projects by size category · click a slice</span></div><div class="panel-b"><div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap"><div class="chart-wrap" style="flex:0 0 240px;height:240px"><canvas id="cCatPie"></canvas></div><div class="chartleg" id="catPieLeg" style="flex:1;min-width:180px"></div></div></div></div>
     <div class="panel" style="margin-bottom:15px"><div class="panel-h"><h3>Monthly summary</h3><span class="hint">assigned · completed · on-time — click any number</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="monthlyTbl"></table></div></div></div>
     <div class="panel"><div class="panel-h"><h3>Designer summary</h3><span class="hint">total assigned · completed · on-time · avg net TAT — click any number</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="designerTbl"></table></div></div></div>
   </div>
@@ -404,9 +405,9 @@ const GIDS={master:"1484820577",design:"392178120",attendance:"1387164875",check
 const APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbx3Owv3vO9qq1plv4mJXC8GOw0cxoauqSTKEoNzlxDxLJRqEcAdjYFdKUJjyPfq5b4T/exec"; // deployed Apps Script feed
 var DEV_TAT_START="DEV Accepted timestamp"; // change to "Asssigned Time_Stamp" if you prefer
 const ONSITE_KM=0.5, TODAY=new Date("2026-06-26");
-const SLA={first:{Alpha:{dev:1,design:2},Beta:{dev:2,design:5},Gamma:{dev:3,design:8},Omega:{dev:0,design:0}},
-           revision:{Alpha:{dev:1,design:3},Beta:{dev:1,design:6},Gamma:{dev:2,design:9},Omega:{dev:0,design:0}}};
-const catFromCap=k=>k<=30?"Alpha":k<=100?"Beta":k<200?"Gamma":"Omega";
+const SLA={first:{Resi:{dev:1,design:2},Alpha:{dev:1,design:2},Beta:{dev:2,design:5},Gamma:{dev:3,design:8},Omega:{dev:0,design:0}},
+           revision:{Resi:{dev:1,design:3},Alpha:{dev:1,design:3},Beta:{dev:1,design:6},Gamma:{dev:2,design:9},Omega:{dev:0,design:0}}};
+const catFromCap=k=>k<=10?"Resi":k<=30?"Alpha":k<=100?"Beta":k<=200?"Gamma":"Omega";
 
 /* ====== SAMPLE DATA ====== */
 const SAMPLE={leads:[
@@ -480,7 +481,7 @@ const FILTERS={hoto:[],city:[],cat:[],devStatus:[],dsnStatus:[],assigned:[],desi
 const FDEF=[
  {key:"hoto",label:"HOTO month",get:l=>[...new Set(l.map(x=>monthKey(x.hoto)))].filter(Boolean).sort(),disp:monthLbl,match:(x,v)=>v.includes(monthKey(x.hoto))},
  {key:"city",label:"City",get:l=>[...new Set(l.map(x=>x.city))].sort(),disp:v=>v,match:(x,v)=>v.includes(x.city)},
- {key:"cat",label:"Size",get:()=>["Alpha","Beta","Gamma","Omega"],disp:v=>v,match:(x,v)=>v.includes(x.cat)},
+ {key:"cat",label:"Size",get:()=>["Resi","Alpha","Beta","Gamma","Omega"],disp:v=>v,match:(x,v)=>v.includes(x.cat)},
  {key:"devStatus",label:"DEV status",get:()=>["Required","Not required","Not assigned","DEV completed","DEV pending","DEV cancelled"],disp:v=>v,match:(x,v)=>{
     return v.some(s=>{
       if(s==="Required")return x.devReqState==="Required"; if(s==="Not required")return x.devReqState==="Not required"; if(s==="Not assigned")return x.devReqState==="Not assigned";
@@ -548,9 +549,15 @@ function renderCharts(L){
     options:{cutout:"60%",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${c.raw}`}}}}});
   $("#donutLeg").innerHTML=dParts.map(([l,c,v])=>`<span class="it" onclick='filterTo("dsnStatus","${l}")'><span class="sw" style="background:${c}"></span>${l} (${v})</span>`).join("");
   // 2) category bar
-  const cats=["Alpha","Beta","Gamma","Omega"];const ccol={Alpha:"#2563C9",Beta:"#0E9488",Gamma:"#D97706",Omega:"#9333EA"};
+  const cats=CAT_ORDER.slice();const ccol=CAT_COL;
   mkChart("cCat",{type:"bar",data:{labels:cats,datasets:[{data:cats.map(c=>L.filter(x=>x.cat===c).length),backgroundColor:cats.map(c=>ccol[c]),borderRadius:6,maxBarThickness:54}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:NOLEG,onClick:(e,el)=>{if(el[0])drillCat(cats[el[0].index]);},scales:{x:NOGRID,y:{beginAtZero:true,grid:{color:"#EEF2F6"},border:{display:false},ticks:{precision:0}}}},plugins:[valLabels]});
+  // 2b) category pie (size mix)
+  const pieParts=cats.map(c=>[c,ccol[c],L.filter(x=>x.cat===c).length]).filter(p=>p[2]>0);
+  mkChart("cCatPie",{type:"pie",data:{labels:pieParts.map(p=>p[0]),datasets:[{data:pieParts.map(p=>p[2]),backgroundColor:pieParts.map(p=>p[1]),borderColor:"#fff",borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const t=pieParts.reduce((a,p)=>a+p[2],0);return ` ${c.label}: ${c.raw} (${t?Math.round(c.raw/t*100):0}%)`;}}}},onClick:(e,el)=>{if(el[0])drillCat(pieParts[el[0].index][0]);}}});
+  const pieTot=pieParts.reduce((a,p)=>a+p[2],0);
+  $("#catPieLeg").innerHTML=pieParts.map(([l,c,v])=>`<span class="it" onclick='filterTo("cat","${l}")'><span class="sw" style="background:${c}"></span>${l} — <b>${v}</b> (${pieTot?Math.round(v/pieTot*100):0}%)</span>`).join("");
   // 3) city horizontal bar
   const cities=[...new Set(L.map(x=>x.city))].map(c=>[c,L.filter(x=>x.city===c).length]).sort((a,b)=>b[1]-a[1]);
   mkChart("cCity",{type:"bar",data:{labels:cities.map(c=>c[0]),datasets:[{data:cities.map(c=>c[1]),backgroundColor:"#3B82F6",borderRadius:5,maxBarThickness:22}]},
@@ -758,7 +765,7 @@ function go(v){$$(".tab").forEach(t=>t.classList.toggle("active",t.dataset.v===v
 
 /* ====== MAP ====== */
 let map,markerLayer,mapMode="city";
-const CITY_COL={Pune:"#2563C9",Delhi:"#D97706",Mumbai:"#0E9488"},DEV_COL={Completed:"#16A34A",Rescheduled:"#D97706",Cancelled:"#DC2626",None:"#94A3B8"},CAT_COL={Alpha:"#2563C9",Beta:"#0E9488",Gamma:"#D97706",Omega:"#9333EA"};
+const CITY_COL={Pune:"#2563C9",Delhi:"#D97706",Mumbai:"#0E9488"},DEV_COL={Completed:"#16A34A",Rescheduled:"#D97706",Cancelled:"#DC2626",None:"#94A3B8"},CAT_COL={Resi:"#16A34A",Alpha:"#2563C9",Beta:"#0E9488",Gamma:"#D97706",Omega:"#9333EA"};
 function colorFor(L){return mapMode==="city"?(CITY_COL[L.city]||"#94A3B8"):mapMode==="cat"?CAT_COL[L.cat]:DEV_COL[L.dev?L.dev.finalStatus:"None"];}
 function dot(c){return L.divIcon({className:"",html:`<div style="width:15px;height:15px;border-radius:50%;background:${c};border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,iconSize:[15,15],iconAnchor:[7,7]});}
 function initMap(){if(map)return;map=L.map("map",{scrollWheelZoom:false}).setView([20.5,75],5);L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{attribution:"© OpenStreetMap, © CARTO"}).addTo(map);markerLayer=L.layerGroup().addTo(map);drawMarkers();}
@@ -1316,8 +1323,8 @@ function costTbl(store){const list=Object.values(store).sort((a,b)=>(b.dCost+b.r
   const totC=tot.dc+tot.rc;
   return `<thead><tr><th class="ml" style="text-align:left">Designer</th><th>Leads done</th><th>Designs</th><th>Revisions</th><th>Design cost</th><th>Revision cost</th><th>Total</th><th>₹/kW</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="muted" style="padding:18px;text-align:center">No data.</td></tr>'}</tbody><tfoot><tr style="font-weight:700;background:#F7F9FB"><td class="ml">Total</td><td>${tot.l}</td><td>${tot.d}</td><td>${tot.r}</td><td class="mono">${fmtMoney(tot.dc)}</td><td class="mono">${fmtMoney(tot.rc)}</td><td class="mono">${fmtMoney(totC)}</td><td class="mono">${tot.kw>0?fmtMoney(totC/tot.kw):"—"}</td></tr></tfoot>`;
 }
-const CAT_ORDER=["Alpha","Beta","Gamma","Omega"];
-function catOfCap(cap){return cap<=30?"Alpha":cap<=100?"Beta":cap<200?"Gamma":"Omega";}
+const CAT_ORDER=["Resi","Alpha","Beta","Gamma","Omega"];
+function catOfCap(cap){return cap<=10?"Resi":cap<=30?"Alpha":cap<=100?"Beta":cap<=200?"Gamma":"Omega";}
 function catOfUnit(u){const L=DATA.leads.find(x=>x.id===u.leadId);return L?L.cat:catOfCap(u.cap);}
 function designerUnits(name){
   const L=filtered();const units=billableUnits(L).filter(u=>u.designer===name);
