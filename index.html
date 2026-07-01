@@ -16,7 +16,7 @@
   --txt:#1A2433;--txt-2:#5A6B7E;--txt-3:#8A98A8;
   --solar:#F5A623;--blue:#2563C9;--blue-l:#E5EEFB;--green:#16A34A;--green-l:#E3F6EA;
   --red:#DC2626;--red-l:#FCE7E7;--amber:#D97706;--amber-l:#FEF1DC;--teal:#0E9488;--teal-l:#DCF4F1;
-  --r:10px;--r-lg:14px;--resi:#16A34A;--alpha:#2563C9;--beta:#0E9488;--gamma:#D97706;--omega:#9333EA;
+  --r:10px;--r-lg:14px;--micro:#16A34A;--alpha:#2563C9;--beta:#0E9488;--gamma:#D97706;--omega:#9333EA;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5}
@@ -128,7 +128,7 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 .p-blue{background:var(--blue-l);color:#1D4FAB}.p-blue .d{background:var(--blue)}
 .p-gray{background:#EEF1F4;color:#5A6B7E}.p-gray .d{background:#94A3B8}
 .cat{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10.5px;font-weight:600;color:#fff}
-.cat-Resi{background:var(--resi)}.cat-Alpha{background:var(--alpha)}.cat-Beta{background:var(--beta)}.cat-Gamma{background:var(--gamma)}.cat-Omega{background:var(--omega)}
+.cat-Micro{background:var(--micro)}.cat-Alpha{background:var(--alpha)}.cat-Beta{background:var(--beta)}.cat-Gamma{background:var(--gamma)}.cat-Omega{background:var(--omega)}
 .bar-row{display:grid;grid-template-columns:130px 1fr 46px;align-items:center;gap:10px;margin-bottom:10px;font-size:12.5px;cursor:pointer}
 .bar-row:hover .bar-track{outline:2px solid var(--blue-l)}
 .bar-track{height:22px;background:#F1F4F7;border-radius:6px;overflow:hidden}
@@ -327,6 +327,7 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 
   <div class="view" id="v-dev"><div class="kpis" id="devKpis"></div>
     <div class="panel"><div class="panel-h"><h3>DEV records</h3></div><div class="panel-b flush"><div class="tbl-wrap"><table id="devTbl"></table></div></div></div>
+    <div id="devAuditWrap"></div>
     <div class="panel" style="margin-top:15px"><div class="panel-h"><h3>DEV-wise report</h3><span class="hint">assigned · completed · pending · % — click a name</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="devWiseTbl"></table></div></div></div></div>
 
   <div class="view" id="v-design"><div class="kpis" id="dsnKpis"></div>
@@ -359,6 +360,7 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
       <div class="cal-h"><button class="cal-nav" onclick="calMove(-1)">‹</button><h3 id="calLabel"></h3><button class="cal-nav" onclick="calMove(1)">›</button></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <div class="map-ctl" id="calCtl"><button class="on" data-c="both">DEV + Design</button><button data-c="dev">DEV</button><button data-c="dsn">Design</button></div>
+        <div class="map-ctl" id="calBasisCtl"><button class="on" data-b="completed">Completed date</button><button data-b="assigned">Assigned date</button></div>
         <select id="calType" class="calsel"><option value="">Int + Ext</option><option value="Internal">Internal</option><option value="External">External</option></select>
         <select id="calDesigner" class="calsel"><option value="">All designers</option></select>
       </div>
@@ -402,13 +404,13 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 <script>
 /* ====== CONFIG ====== */
 const SHEET_ID="1g6vGbVMAaLKnJI06F-xKVskKcE862EelVC_CKSH7U6c";
-const GIDS={master:"1484820577",design:"392178120",attendance:"1387164875",checkinout:"854609223",users:"76549870",cost:"1878892621"};
+const GIDS={master:"1484820577",design:"392178120",attendance:"1387164875",checkinout:"854609223",users:"76549870",cost:"1878892621",audit:"654140760"};
 const APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbx3Owv3vO9qq1plv4mJXC8GOw0cxoauqSTKEoNzlxDxLJRqEcAdjYFdKUJjyPfq5b4T/exec"; // deployed Apps Script feed
 var DEV_TAT_START="DEV Accepted timestamp"; // change to "Asssigned Time_Stamp" if you prefer
 const ONSITE_KM=0.5, TODAY=new Date("2026-06-26");
-const SLA={first:{Resi:{dev:1,design:2},Alpha:{dev:1,design:3},Beta:{dev:2,design:6},Gamma:{dev:3,design:7},Omega:{dev:0,design:8}},
-           revision:{Resi:{dev:1,design:2},Alpha:{dev:1,design:3},Beta:{dev:1,design:5},Gamma:{dev:2,design:6},Omega:{dev:0,design:7}}};
-const catFromCap=k=>k<=10?"Resi":k<=30?"Alpha":k<=100?"Beta":k<=200?"Gamma":"Omega";
+const SLA={first:{Micro:{dev:1,design:2},Alpha:{dev:1,design:3},Beta:{dev:2,design:6},Gamma:{dev:3,design:7},Omega:{dev:0,design:8}},
+           revision:{Micro:{dev:1,design:2},Alpha:{dev:1,design:3},Beta:{dev:1,design:5},Gamma:{dev:2,design:6},Omega:{dev:0,design:7}}};
+const catFromCap=k=>k<15?"Micro":k<31?"Alpha":k<101?"Beta":k<200?"Gamma":"Omega";
 
 /* ====== SAMPLE DATA ====== */
 const SAMPLE={leads:[
@@ -490,11 +492,18 @@ function enrich(L){
   const totHold=(L.designAll||[]).reduce((a,v)=>a+(v.holdDays||0),0);
   const startD=L.designStart||((L.designAll||[])[0]&&L.designAll[0].assigned)||null;
   d.projTotalDays=(startD&&lastDone)?Math.max(0,Math.round((dayDiff(startD,lastDone)-totHold)*10)/10):null;
+  // DEV approval (audit) — only relevant once a required DEV visit is completed
+  L.audit=AUDIT_IDX[L.id]||null;
+  L.devApproval=null;
+  if(L.devReq==="Yes"&&L.dev&&L.dev.finalStatus==="Completed"){
+    const a=L.audit;const st=a&&a.status?(/approv/i.test(a.status)?"Approved":/reject|declin/i.test(a.status)?"Rejected":"Pending"):"Pending";
+    L.devApproval={state:st,reason:a?a.reason:"",points:a?a.points:"",raw:a?a.status:""};
+  }
   L.pendStage=pendStageOf(L);
   return L;
 }
-const PEND_STAGES=["Lead not updated","DEV assign pending","DEV assigned – not accepted","DEV in progress","Capacity not updated (LRM)","Design assign pending","Design in progress"];
-const PEND_GROUP={na:["Lead not updated","Capacity not updated (LRM)"],dev:["DEV assign pending","DEV assigned – not accepted","DEV in progress"],dsn:["Design assign pending","Design in progress"]};
+const PEND_STAGES=["Lead not updated","DEV assign pending","DEV assigned – not accepted","DEV in progress","DEV approval pending","DEV rejected (audit)","Capacity not updated (LRM)","Design assign pending","Design in progress"];
+const PEND_GROUP={na:["Lead not updated","Capacity not updated (LRM)"],dev:["DEV assign pending","DEV assigned – not accepted","DEV in progress","DEV approval pending","DEV rejected (audit)"],dsn:["Design assign pending","Design in progress"]};
 function pendStageOf(L){
   const d=L.design;
   if(d.status==="Completed")return null;                    // design done (incl. cancelled) → not pending
@@ -506,7 +515,11 @@ function pendStageOf(L){
       if(!dev.acceptedOn)return "DEV assigned – not accepted";
       return "DEV in progress";
     }
-    // DEV completed → fall through to design stage
+    // DEV visit completed → audit approval gate
+    const ap=L.devApproval;
+    if(ap&&ap.state==="Rejected")return "DEV rejected (audit)";
+    if(!ap||ap.state!=="Approved")return "DEV approval pending";
+    // approved → design stage
   }else if(L.devReq==="No"){
     if((L.billCap||0)<=1 && !L.capacityUpdated)return "Capacity not updated (LRM)";
     // capacity updated → design stage
@@ -515,13 +528,14 @@ function pendStageOf(L){
   return "Design in progress";
 }
 let DATA={leads:[],attendance:[],users:[]};
+let AUDIT_IDX={};
 
 /* ====== FILTERS ====== */
 const FILTERS={hoto:[],city:[],cat:[],devStatus:[],dsnStatus:[],assigned:[],designer:[],type:[]};
 const FDEF=[
  {key:"hoto",label:"HOTO month",get:l=>[...new Set(l.map(x=>monthKey(x.hoto)))].filter(Boolean).sort(),disp:monthLbl,match:(x,v)=>v.includes(monthKey(x.hoto))},
  {key:"city",label:"City",get:l=>[...new Set(l.map(x=>x.city))].sort(),disp:v=>v,match:(x,v)=>v.includes(x.city)},
- {key:"cat",label:"Size",get:()=>["Resi","Alpha","Beta","Gamma","Omega"],disp:v=>v,match:(x,v)=>v.includes(x.cat)},
+ {key:"cat",label:"Size",get:()=>["Micro","Alpha","Beta","Gamma","Omega"],disp:v=>v,match:(x,v)=>v.includes(x.cat)},
  {key:"devStatus",label:"DEV status",get:()=>["Required","Not required","Not assigned","DEV completed","DEV pending","DEV cancelled"],disp:v=>v,match:(x,v)=>{
     return v.some(s=>{
       if(s==="Required")return x.devReqState==="Required"; if(s==="Not required")return x.devReqState==="Not required"; if(s==="Not assigned")return x.devReqState==="Not assigned";
@@ -613,7 +627,7 @@ function renderCharts(L){
   $("#convFunnel").innerHTML=frow("Total unique leads",L,"#2563C9",null)+frow("DEV completed",devC,"#0E9488",total)+frow("Design completed",dsnC,"#16A34A",total)+frow("On-time (SLA)",onT,"#0E1B2A",dsnC.length);
   // 5) design & dev completed by month
   const mk=k=>monthKey(k);
-  const months=[...new Set(L.flatMap(x=>[mk(x.dev?.completedDate),mk(x.design.completed)]).filter(Boolean))].sort().slice(-6);
+  const months=[];for(let i=6;i>=0;i--){const dt=new Date(TODAY.getFullYear(),TODAY.getMonth()-i,1);months.push(`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}`);}
   mkChart("cMonth",{type:"bar",data:{labels:months.map(monthLbl),datasets:[
       {label:"Design completed",data:months.map(m=>L.filter(x=>mk(x.design.completed)===m).length),backgroundColor:"#16A34A",borderRadius:5,maxBarThickness:26},
       {label:"DEV completed",data:months.map(m=>L.filter(x=>mk(x.dev?.completedDate)===m).length),backgroundColor:"#0E1B2A",borderRadius:5,maxBarThickness:26}]},
@@ -805,7 +819,7 @@ function go(v){$$(".tab").forEach(t=>t.classList.toggle("active",t.dataset.v===v
 
 /* ====== MAP ====== */
 let map,markerLayer,mapMode="city";
-const CITY_COL={Pune:"#2563C9",Delhi:"#D97706",Mumbai:"#0E9488"},DEV_COL={Completed:"#16A34A",Rescheduled:"#D97706",Cancelled:"#DC2626",None:"#94A3B8"},CAT_COL={Resi:"#16A34A",Alpha:"#2563C9",Beta:"#0E9488",Gamma:"#D97706",Omega:"#9333EA"};
+const CITY_COL={Pune:"#2563C9",Delhi:"#D97706",Mumbai:"#0E9488"},DEV_COL={Completed:"#16A34A",Rescheduled:"#D97706",Cancelled:"#DC2626",None:"#94A3B8"},CAT_COL={Micro:"#16A34A",Alpha:"#2563C9",Beta:"#0E9488",Gamma:"#D97706",Omega:"#9333EA"};
 function colorFor(L){return mapMode==="city"?(CITY_COL[L.city]||"#94A3B8"):mapMode==="cat"?CAT_COL[L.cat]:DEV_COL[L.dev?L.dev.finalStatus:"None"];}
 function dot(c){return L.divIcon({className:"",html:`<div style="width:15px;height:15px;border-radius:50%;background:${c};border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,iconSize:[15,15],iconAnchor:[7,7]});}
 function initMap(){if(map)return;map=L.map("map",{scrollWheelZoom:false}).setView([20.5,75],5);L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{attribution:"© OpenStreetMap, © CARTO"}).addTo(map);markerLayer=L.layerGroup().addTo(map);drawMarkers();}
@@ -831,16 +845,28 @@ function renderDev(){const Lall=filtered();
   const pend=devLeads.filter(x=>x.dev&&!["Completed","Cancelled"].includes(x.dev.finalStatus));
   const pendFresh=pend.filter(x=>(x.devAll||[]).length<=1),pendRev=pend.filter(x=>(x.devAll||[]).length>1);
   const onT=done.filter(x=>{const t=SLA.first[x.cat]?SLA.first[x.cat].dev:0;return t&&x.dev.devTat!=null&&x.dev.devTat<=t;});
+  const approved=done.filter(x=>x.devApproval&&x.devApproval.state==="Approved");
+  const auditPend=done.filter(x=>x.devApproval&&x.devApproval.state==="Pending");
+  const rejected=done.filter(x=>x.devApproval&&x.devApproval.state==="Rejected");
   $("#devKpis").innerHTML=
     cardKpi("Expected DEV",devLeads,"DEV required","var(--solar)")+
     cardKpi("Re-visits",revisit,">1 DEV visit","var(--amber)")+
-    cardKpi("Completed",done,`${onT.length} on-time`,"var(--green)")+
+    cardKpi("Visit completed",done,`${onT.length} on-time`,"var(--green)")+
+    cardKpi("Approved",approved,"audit cleared","var(--teal)")+
+    cardKpi("Audit pending",auditPend,"visit done, awaiting approval","#6E59C7")+
+    cardKpi("Rejected",rejected,"audit rejected","var(--red)")+
     cardKpi("Pending",pend,`Fresh ${pendFresh.length} · Revisit ${pendRev.length}`,"var(--red)");
+  // audit exceptions — rejected (with reason) + audit pending
+  const auditRows=(arr,badge)=>arr.map(L0=>`<tr><td class="ml"><a class="link" onclick='openLead("${L0.id}","dev")'>${L0.project}</a><br><span class="mono muted" style="font-size:10px">${L0.id}</span></td><td>${L0.dev.devName||"—"}</td><td class="mono" style="font-size:11px">${L0.dev.completedDate||"—"}</td><td>${badge}</td><td class="ml" style="font-size:11.5px;color:var(--txt-2)">${(L0.devApproval&&(L0.devApproval.reason||L0.devApproval.points))||"—"}</td></tr>`).join("");
+  const auditPanel=(rejected.length||auditPend.length)?`<div class="panel" style="margin-top:15px"><div class="panel-h"><h3>DEV audit — rejected & pending approval</h3><span class="hint">${rejected.length} rejected · ${auditPend.length} awaiting approval</span></div><div class="panel-b flush"><div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">Project</th><th>DEV</th><th>Visit completed</th><th>Audit</th><th class="ml" style="text-align:left">Reason / audit points</th></tr></thead><tbody>${auditRows(rejected,'<span class="pill p-red"><span class="d"></span>Rejected</span>')}${auditRows(auditPend,'<span class="pill p-purple"><span class="d"></span>Approval pending</span>')||""}${(!rejected.length&&!auditPend.length)?'<tr><td colspan="5" class="muted" style="padding:16px;text-align:center">None.</td></tr>':""}</tbody></table></div></div></div>`:"";
+  window._devAuditPanel=auditPanel;
+  const auditPill=x=>{if(!x.devApproval)return '<span class="muted">—</span>';const s=x.devApproval.state;return s==="Approved"?'<span class="pill p-green"><span class="d"></span>Approved</span>':s==="Rejected"?'<span class="pill p-red"><span class="d"></span>Rejected</span>':'<span class="pill p-purple"><span class="d"></span>Approval pending</span>';};
   const Lr=devLeads.filter(x=>x.dev);
-  $("#devTbl").innerHTML=`<thead><tr><th>Lead / Project</th><th>DEV</th><th>Status</th><th>DEV count</th><th>Resch.</th><th>DEV TAT</th><th>Location</th><th></th></tr></thead><tbody>`+
+  $("#devTbl").innerHTML=`<thead><tr><th>Lead / Project</th><th>DEV</th><th>Status</th><th>Audit</th><th>DEV count</th><th>Resch.</th><th>DEV TAT</th><th>Location</th><th></th></tr></thead><tbody>`+
    Lr.map(L0=>{const d=L0.dev,dl=d.distKm==null?'<span class="muted">—</span>':(d.onsite?`<span class="dist" style="color:var(--green)">● on-site <span class="km">${d.distKm}km</span></span>`:`<span class="dist" style="color:var(--red)">▲ off-site <span class="km">${d.distKm}km</span></span>`);
-     return `<tr><td><b>${L0.project}</b><br><span class="mono muted" style="font-size:10px">${L0.id}</span></td><td>${d.devName}</td><td>${statusPill(d.finalStatus)}</td><td style="text-align:center"><b>${(L0.devAll||[]).length}</b></td><td>${d.reschedules}</td><td class="tat-cell">${fmt(d.devTat)} d</td><td>${dl}</td><td><a class="link" onclick='openLead("${L0.id}","dev")'>DEV →</a></td></tr>`;}).join("")+`</tbody>`;
-  if(!Lr.length)$("#devTbl").innerHTML+=`<tbody><tr><td colspan="8" style="text-align:center;padding:30px" class="muted">No DEV records.</td></tr></tbody>`;
+     return `<tr><td><b>${L0.project}</b><br><span class="mono muted" style="font-size:10px">${L0.id}</span></td><td>${d.devName}</td><td>${statusPill(d.finalStatus)}</td><td>${auditPill(L0)}</td><td style="text-align:center"><b>${(L0.devAll||[]).length}</b></td><td>${d.reschedules}</td><td class="tat-cell">${fmt(d.devTat)} d</td><td>${dl}</td><td><a class="link" onclick='openLead("${L0.id}","dev")'>DEV →</a></td></tr>`;}).join("")+`</tbody>`;
+  if(!Lr.length)$("#devTbl").innerHTML+=`<tbody><tr><td colspan="9" style="text-align:center;padding:30px" class="muted">No DEV records.</td></tr></tbody>`;
+  const aw=$("#devAuditWrap");if(aw)aw.innerHTML=auditPanel;
   // DEV-wise report
   const W={};Lall.forEach(L=>{(L.devAll||[]).forEach((v,i)=>{const n=v.devName;if(!n)return;const s=W[n]||(W[n]={name:n,assigned:[],comp:[],pend:[]});s.assigned.push(L.id);if(v.status==="Completed")s.comp.push(L.id);else if(v.status!=="Cancelled")s.pend.push(L.id);});});
   const rows=Object.values(W).sort((a,b)=>uniq(b.assigned).length-uniq(a.assigned).length);
@@ -929,7 +955,7 @@ function renderPending(){
       +pendPanel("Ageing — not updated / capacity pending",agingTable(inG,ageHoto,"Not updated"),`days since HOTO · click a bucket · <span class="det" onclick="pendDetail('na')">Details ▸</span>`)
       +pendPanel("Leads — not updated / capacity pending",drillTable(inG));
   }else if(pendCur==="dev"){
-    html=`<div class="kpis">${cardOf("DEV assign pending","no DEV engineer yet","var(--red)")}${cardOf("DEV assigned – not accepted","assigned, awaiting customer confirm","var(--amber)")}${cardOf("DEV in progress","accepted, visit pending","var(--blue)")}${cardKpi("Total DEV pending",inG,"marked DEV required","var(--ink)")}</div>`
+    html=`<div class="kpis">${cardOf("DEV assign pending","no DEV engineer yet","var(--red)")}${cardOf("DEV assigned – not accepted","assigned, awaiting customer confirm","var(--amber)")}${cardOf("DEV in progress","accepted, visit pending","var(--blue)")}${cardOf("DEV approval pending","visit done, audit pending","#6E59C7")}${cardOf("DEV rejected (audit)","audit rejected — see reason","var(--red)")}${cardKpi("Total DEV pending",inG,"marked DEV required","var(--ink)")}</div>`
       +pendPanel("Ageing — DEV pending",agingTable(inG,ageHoto,"DEV pending"),`days since HOTO · click a bucket · <span class="det" onclick="pendDetail('dev')">Details ▸</span>`)
       +pendPanel("DEV pending — list",drillTable(inG));
   }else{
@@ -1012,7 +1038,7 @@ function tatDetailTab(which,btn){
 }
 
 /* ====== CALENDAR ====== */
-let calDate=new Date("2026-06-01"),calMode="both";
+let calDate=new Date("2026-06-01"),calMode="both",calBasis="completed";
 function calMove(n){calDate.setMonth(calDate.getMonth()+n);renderCalendar();}
 function calPopulateDesigners(){
   const typeF=$("#calType")?$("#calType").value:"";
@@ -1027,8 +1053,8 @@ function renderCalendar(){const y=calDate.getFullYear(),m=calDate.getMonth();$("
   const add=(date,html,cls)=>{if(!date)return;const k=date.slice(0,10);(events[k]=events[k]||[]).push({html,cls});};
   const dsnMatch=x=>{if(!typeF&&!dsnF)return true;return (x.designAll||[]).some(v=>(!typeF||v.type===typeF)&&(!dsnF||v.designer===dsnF));};
   L.forEach(x=>{
-    if((calMode==="both"||calMode==="dev")&&x.dev&&x.dev.completedDate&&!typeF&&!dsnF)add(x.dev.completedDate,`DEV: ${x.project}`,"ev-dev");
-    if((calMode==="both"||calMode==="dsn")&&x.design.completed&&dsnMatch(x))add(x.design.completed,`Design: ${x.project}`,"ev-dsn");});
+    if((calMode==="both"||calMode==="dev")&&x.dev&&!typeF&&!dsnF){const dt=calBasis==="assigned"?x.dev.assignedOn:x.dev.completedDate;if(dt)add(dt,`DEV: ${x.project}`,"ev-dev");}
+    if((calMode==="both"||calMode==="dsn")&&dsnMatch(x)){const dt=calBasis==="assigned"?x.design.assigned:x.design.completed;if(dt)add(dt,`Design: ${x.project}`,"ev-dsn");}});
   const first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
   let html=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>`<div class="dow">${d}</div>`).join("");
   for(let i=0;i<first;i++)html+=`<div class="cell out"></div>`;
@@ -1036,14 +1062,15 @@ function renderCalendar(){const y=calDate.getFullYear(),m=calDate.getMonth();$("
     html+=`<div class="cell ${evs.length?'has':''}" ${evs.length?`onclick="calDay('${key}')"`:''}><div class="dn">${d}</div>${evs.slice(0,3).map(e=>`<div class="ev ${e.cls}" title="${e.html}">${e.html}</div>`).join("")}${evs.length>3?`<div class="muted" style="font-size:10px">+${evs.length-3} more</div>`:""}</div>`;}
   $("#cal").innerHTML=html;}
 function calDay(key){
-  const L=filtered();const cards=[];
+  const L=filtered();const cards=[];const bDev=x=>calBasis==="assigned"?x.dev.assignedOn:x.dev.completedDate;const bDsn=x=>calBasis==="assigned"?x.design.assigned:x.design.completed;
   L.forEach(x=>{
-    if((calMode==="both"||calMode==="dev")&&x.dev&&x.dev.completedDate===key)cards.push(devDayCard(x));
-    if((calMode==="both"||calMode==="dsn")&&x.design.completed===key)cards.push(dsnDayCard(x));
+    if((calMode==="both"||calMode==="dev")&&x.dev&&bDev(x)===key)cards.push(devDayCard(x));
+    if((calMode==="both"||calMode==="dsn")&&bDsn(x)===key)cards.push(dsnDayCard(x));
   });
   const dt=new Date(key+"T00:00:00");const lbl=dt.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-  const devN=L.filter(x=>x.dev&&x.dev.completedDate===key).length,dsnN=L.filter(x=>x.design.completed===key).length;
-  showModal(lbl,`${cards.length} event(s) · ${devN} DEV · ${dsnN} design completed`,cards.join("")||'<div class="muted">No events.</div>');
+  const word=calBasis==="assigned"?"assigned":"completed";
+  const devN=L.filter(x=>x.dev&&bDev(x)===key).length,dsnN=L.filter(x=>bDsn(x)===key).length;
+  showModal(lbl,`${cards.length} event(s) · ${devN} DEV · ${dsnN} design ${word}`,cards.join("")||'<div class="muted">No events.</div>');
 }
 function devDayCard(L){const d=L.dev;const dist=d.distKm==null?"":(d.onsite?`<span class="s" style="color:var(--green)">📍 on-site <b>${d.distKm}km</b></span>`:`<span class="s" style="color:var(--red)">📍 off-site <b>${d.distKm}km</b></span>`);
   return `<div class="daycard dev"><div class="top"><div><div class="pn">${L.project}</div><div class="pid">${L.id}</div></div><span class="pill p-amber"><span class="d"></span>DEV ${d.finalStatus}</span></div>
@@ -1212,6 +1239,11 @@ function renderJourney(L){
       items.push({type:"dev",bad:/cancel|pending/i.test(b.connected),date:b.sched||(b.ts?isoDate(b.ts):"")||d.acceptedOn||"",t:`${tag} ${bi===0?"scheduled":"re-scheduled "+bi} · ${b.connected}`,m:`${b.sched?"meeting "+b.sched:""}${b.ts?" · "+b.ts:""}`});});
     items.push({type:"dev",bad:d.status!=="Completed",date:d.completed||d.acceptedOn||"",t:`${tag} ${d.status}`,m:`completed ${d.completed||"—"} · net TAT ${d.tat==null?"—":d.tat+"d"}${d.holdDays?` (−${d.holdDays}d hold)`:""}${d.distKm!=null?` · ${d.distKm}km ${d.onsite?"on-site":"off-site"}`:""}`});
   });
+  if(L.devApproval){const ap=L.devApproval;const adt=(L.dev&&L.dev.completedDate)||"";
+    const label=ap.state==="Approved"?"DEV approved (audit cleared)":ap.state==="Rejected"?"DEV audit rejected":"DEV completed — awaiting audit approval";
+    const msg=ap.state==="Rejected"?`reason: ${ap.reason||"—"}${ap.points?" · audit points: "+ap.points:""}`:(ap.state==="Approved"?(ap.points?"audit points: "+ap.points:"approved by audit"):"visit done · pending audit approval");
+    items.push({type:"dev",bad:ap.state!=="Approved",date:adt,t:label,m:msg});
+  }
   const drcv=L.designStart;const src=L.capacityUpdated?"capacity updated (J)":(L.devReq==="Yes"?"DEV completed":"HOTO");
   items.push({type:"recvd",date:drcv||"",t:"Design data received",m:`${drcv||"—"} · source: ${src}`});
   (L.designAll||[]).forEach(d=>{const canc=d.cancelled;const st=canc?"Cancelled":d.status;
@@ -1266,6 +1298,7 @@ function closeModal(){_modalStack=[];$("#modal").classList.remove("show");const 
 $$(".tab").forEach(t=>t.onclick=()=>{$$(".tab").forEach(x=>x.classList.remove("active"));t.classList.add("active");const v=t.dataset.v;$$(".view").forEach(x=>x.classList.remove("active"));$("#v-"+v).classList.add("active");if(v==="map"){initMap();setTimeout(()=>map.invalidateSize(),60);}if(v==="calendar")renderCalendar();});
 $("#mapCtl").onclick=e=>{if(e.target.dataset.c){[...e.currentTarget.children].forEach(b=>b.classList.remove("on"));e.target.classList.add("on");mapMode=e.target.dataset.c;drawMarkers();}};
 $("#calCtl").onclick=e=>{if(e.target.dataset.c){[...e.currentTarget.children].forEach(b=>b.classList.remove("on"));e.target.classList.add("on");calMode=e.target.dataset.c;renderCalendar();}};
+$("#calBasisCtl").onclick=e=>{if(e.target.dataset.b){[...e.currentTarget.children].forEach(b=>b.classList.remove("on"));e.target.classList.add("on");calBasis=e.target.dataset.b;renderCalendar();}};
 $("#calType").addEventListener("change",()=>{if($("#calDesigner"))$("#calDesigner").value="";renderCalendar();});
 $("#calDesigner").addEventListener("change",renderCalendar);
 $("#projSearch").addEventListener("input",renderProjects);
@@ -1366,8 +1399,8 @@ function costTbl(store){const list=Object.values(store).sort((a,b)=>(b.dCost+b.r
   const totC=tot.dc+tot.rc;
   return `<thead><tr><th class="ml" style="text-align:left">Designer</th><th>Leads done</th><th>Designs</th><th>Revisions</th><th>Design cost</th><th>Revision cost</th><th>Total</th><th>₹/kW</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="muted" style="padding:18px;text-align:center">No data.</td></tr>'}</tbody><tfoot><tr style="font-weight:700;background:#F7F9FB"><td class="ml">Total</td><td>${tot.l}</td><td>${tot.d}</td><td>${tot.r}</td><td class="mono">${fmtMoney(tot.dc)}</td><td class="mono">${fmtMoney(tot.rc)}</td><td class="mono">${fmtMoney(totC)}</td><td class="mono">${tot.kw>0?fmtMoney(totC/tot.kw):"—"}</td></tr></tfoot>`;
 }
-const CAT_ORDER=["Resi","Alpha","Beta","Gamma","Omega"];
-function catOfCap(cap){return cap<=10?"Resi":cap<=30?"Alpha":cap<=100?"Beta":cap<=200?"Gamma":"Omega";}
+const CAT_ORDER=["Micro","Alpha","Beta","Gamma","Omega"];
+function catOfCap(cap){return cap<15?"Micro":cap<31?"Alpha":cap<101?"Beta":cap<200?"Gamma":"Omega";}
 function catOfUnit(u){const L=DATA.leads.find(x=>x.id===u.leadId);return L?L.cat:catOfCap(u.cap);}
 function designerUnits(name){
   const L=filtered();const units=billableUnits(L).filter(u=>u.designer===name);
@@ -1542,18 +1575,21 @@ async function loadData(){
     const j=await res.json();
     let cost=j.cost||[];
     if(!cost.length){try{cost=await fetchCsv(GIDS.cost);}catch(e){console.warn("cost csv fallback failed",e);}}
-    return {master:j.master||[],design:j.design||[],users:j.users||[],att:j.attendance||[],cost};
+    let audit=j.audit||[];
+    if(!audit.length){try{audit=await fetchCsv(GIDS.audit);}catch(e){console.warn("audit csv fallback failed",e);}}
+    return {master:j.master||[],design:j.design||[],users:j.users||[],att:j.attendance||[],cost,audit};
   }
-  const [master,design,users,att,cost]=await Promise.all([
-    fetchCsv(GIDS.master),fetchCsv(GIDS.design),fetchCsv(GIDS.users).catch(()=>[]),fetchCsv(GIDS.attendance).catch(()=>[]),fetchCsv(GIDS.cost).catch(()=>[])]);
-  return {master,design,users,att,cost};
+  const [master,design,users,att,cost,audit]=await Promise.all([
+    fetchCsv(GIDS.master),fetchCsv(GIDS.design),fetchCsv(GIDS.users).catch(()=>[]),fetchCsv(GIDS.attendance).catch(()=>[]),fetchCsv(GIDS.cost).catch(()=>[]),fetchCsv(GIDS.audit).catch(()=>[])]);
+  return {master,design,users,att,cost,audit};
 }
 async function toggleConnect(){
   $("#updstamp").textContent="Connecting…";$("#connBtn").classList.remove("live");
   try{
-    const {master,design,users,att,cost}=await loadData();
+    const {master,design,users,att,cost,audit}=await loadData();
     const M=Array.isArray(master)?master:[],D=Array.isArray(design)?design:[];
     if(!M.length)throw new Error("Master sheet empty / unreachable");
+    AUDIT_IDX={};(Array.isArray(audit)?audit:[]).forEach(r=>{const b=baseId(pick(r,"Lead ID","Lead Id","Lead","Lead_ID"));if(!b)return;AUDIT_IDX[b]={status:pick(r,"DEV Approval Status","Approval Status","DEV Approval","Audit Status","Status"),reason:pick(r,"Rejected Reason","Reject Reason","Rejection Reason","Reason"),points:pick(r,"Audit Ponits","Audit Points","Points","Audit Point")};});
     const dByLead={};D.forEach(r=>{const b=String(pick(r,"Lead ID")||"").trim();if(b)(dByLead[b]=dByLead[b]||[]).push(r);});
     const mByLead={};M.forEach(r=>{const b=baseId(pick(r,"Lead ID"));if(b)(mByLead[b]=mByLead[b]||[]).push(r);});
     const leads=[];let skipped=0;
