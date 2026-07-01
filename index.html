@@ -444,8 +444,25 @@ function enrich(L){
   L.cat=catFromCap((L.design&&L.design.finalCap>0)?L.design.finalCap:L.capacity);
   L.devReqState=L.devReq==="Yes"?"Required":L.devReq==="No"?"Not required":"Not assigned";
   if(!L.devStatus)L.devStatus=L.dev?L.dev.finalStatus:(L.devReq==="No"?"DEV not required":L.devReq===""?"Project not updated":"DEV assign pending");
-  // design clock start: DEV completed date (if DEV required) → else Capacity Updated date (J) → else HOTO
-  L.designStart=L.capacityUpdated||((L.devReq==="Yes"&&L.dev)?L.dev.completedDate:null)||L.hoto;
+  // DEV approval (audit) — computed early so it can feed the design-received date
+  L.audit=AUDIT_IDX[L.id]||null;
+  L.devApproval=null;
+  if(L.devReq==="Yes"&&L.dev&&L.dev.finalStatus==="Completed"){
+    const a=L.audit;const st=a&&a.status?(/approv/i.test(a.status)?"Approved":/reject|declin/i.test(a.status)?"Rejected":"Pending"):"Pending";
+    L.devApproval={state:st,reason:a?a.reason:"",points:a?a.points:"",raw:a?a.status:"",date:a?isoDate(a.date):null};
+  }
+  const laterD=(a,b)=>{if(a&&b)return a>=b?a:b;return a||b||null;};
+  const jDate=L.capacityUpdated;                    // J column (Capacity Updated date)
+  // Design-data-received clock:
+  if(L.devReq==="Yes"){
+    const auditDate=(L.devApproval&&L.devApproval.state==="Approved")?(L.devApproval.date||(L.dev&&L.dev.completedDate)):null;
+    if(auditDate) L.designStart=laterD(auditDate,jDate);         // audit date, or later of audit & J
+    else L.designStart=(L.dev&&L.dev.completedDate)||jDate||L.hoto; // not yet approved → fallback
+  }else if(L.devReq==="No"){
+    L.designStart=((L.billCap||0)>1)?laterD(L.hoto,jDate):(jDate||null); // cap>1 → later of HOTO & J; else pending capacity
+  }else{
+    L.designStart=jDate||L.hoto;
+  }
   if(L.dev){const b=L.dev.blocks,eff=b[b.length-1];L.dev.effective=eff;
     L.dev.reschedules=b.filter(x=>x.connected==="Rescheduled").length;
     L.dev.completedDate=isoDate(eff.ts)||null;
@@ -492,13 +509,6 @@ function enrich(L){
   const totHold=(L.designAll||[]).reduce((a,v)=>a+(v.holdDays||0),0);
   const startD=L.designStart||((L.designAll||[])[0]&&L.designAll[0].assigned)||null;
   d.projTotalDays=(startD&&lastDone)?Math.max(0,Math.round((dayDiff(startD,lastDone)-totHold)*10)/10):null;
-  // DEV approval (audit) — only relevant once a required DEV visit is completed
-  L.audit=AUDIT_IDX[L.id]||null;
-  L.devApproval=null;
-  if(L.devReq==="Yes"&&L.dev&&L.dev.finalStatus==="Completed"){
-    const a=L.audit;const st=a&&a.status?(/approv/i.test(a.status)?"Approved":/reject|declin/i.test(a.status)?"Rejected":"Pending"):"Pending";
-    L.devApproval={state:st,reason:a?a.reason:"",points:a?a.points:"",raw:a?a.status:""};
-  }
   L.pendStage=pendStageOf(L);
   return L;
 }
@@ -1589,7 +1599,7 @@ async function toggleConnect(){
     const {master,design,users,att,cost,audit}=await loadData();
     const M=Array.isArray(master)?master:[],D=Array.isArray(design)?design:[];
     if(!M.length)throw new Error("Master sheet empty / unreachable");
-    AUDIT_IDX={};(Array.isArray(audit)?audit:[]).forEach(r=>{const b=baseId(pick(r,"Lead ID","Lead Id","Lead","Lead_ID"));if(!b)return;AUDIT_IDX[b]={status:pick(r,"DEV Approval Status","Approval Status","DEV Approval","Audit Status","Status"),reason:pick(r,"Rejected Reason","Reject Reason","Rejection Reason","Reason"),points:pick(r,"Audit Ponits","Audit Points","Points","Audit Point")};});
+    AUDIT_IDX={};(Array.isArray(audit)?audit:[]).forEach(r=>{const b=baseId(pick(r,"Lead ID","Lead Id","Lead","Lead_ID"));if(!b)return;AUDIT_IDX[b]={status:pick(r,"DEV Approval Status","Approval Status","DEV Approval","Audit Status","Status"),reason:pick(r,"Rejected Reason","Reject Reason","Rejection Reason","Reason"),points:pick(r,"Audit Ponits","Audit Points","Points","Audit Point"),date:pick(r,"Audit Date","Approval Date","Approved On","Audit Timestamp","Timestamp","Date","DEV Approval Date","Approved Date","Audit completed on")};});
     const dByLead={};D.forEach(r=>{const b=String(pick(r,"Lead ID")||"").trim();if(b)(dByLead[b]=dByLead[b]||[]).push(r);});
     const mByLead={};M.forEach(r=>{const b=baseId(pick(r,"Lead ID"));if(b)(mByLead[b]=mByLead[b]||[]).push(r);});
     const leads=[];let skipped=0;
