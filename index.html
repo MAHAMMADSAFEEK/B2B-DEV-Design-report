@@ -88,8 +88,8 @@ h1,h2,h3,h4{font-family:'Space Grotesk';font-weight:600;letter-spacing:-.01em}
 .ins.bad{border-left-color:var(--amber);background:#FFF9EE}
 .ins .it{font-family:'Space Grotesk';font-weight:600;font-size:15px}
 .ins .ds{font-size:11.5px;color:var(--txt-2);margin-top:3px}
-.charts-row{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:15px}
-.charts-row2{display:grid;grid-template-columns:1.45fr 1fr;gap:15px;margin-bottom:15px}
+.charts-row{display:grid;grid-template-columns:repeat(5,1fr);gap:15px;margin-bottom:15px}
+.charts-row2{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:15px;margin-bottom:15px}
 .chart-wrap{position:relative;height:225px}
 .chart-wrap.tall{height:300px}
 .chartleg{display:flex;flex-wrap:wrap;gap:5px 12px;margin-top:12px;font-size:11.5px;justify-content:center}
@@ -102,7 +102,7 @@ h1,h2,h3,h4{font-family:'Space Grotesk';font-weight:600;letter-spacing:-.01em}
 .cfunnel .ctrack{height:11px;background:#EEF2F6;border-radius:6px;overflow:hidden}
 .cfunnel .cfill{height:100%;border-radius:6px}
 .cfunnel .sub{font-size:11px;color:var(--txt-3);margin-top:4px}
-@media(max-width:1200px){.charts-row{grid-template-columns:1fr 1fr}}
+@media(max-width:1200px){.charts-row{grid-template-columns:repeat(2,1fr)}.charts-row2{grid-template-columns:1fr 1fr}}
 @media(max-width:880px){.charts-row,.charts-row2{grid-template-columns:1fr}}
 .kpi .val{font-family:'Space Grotesk';font-size:28px;font-weight:700;line-height:1}
 .kpi .val small{font-size:13px;color:var(--txt-2);font-weight:500}
@@ -300,13 +300,14 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
       <div class="panel"><div class="panel-h"><h3>PROJECTS BY CATEGORY</h3><span class="det" onclick="go('tat')">Details ▸</span></div><div class="panel-b"><div class="chart-wrap"><canvas id="cCat"></canvas></div></div></div>
       <div class="panel"><div class="panel-h"><h3>LEADS BY CITY</h3><span class="det" onclick="go('map')">Details ▸</span></div><div class="panel-b"><div class="chart-wrap"><canvas id="cCity"></canvas></div></div></div>
       <div class="panel"><div class="panel-h"><h3>CONVERSION FUNNEL</h3><span class="det" onclick="go('funnel')">Details ▸</span></div><div class="panel-b cfunnel" id="convFunnel"></div></div>
+      <div class="panel"><div class="panel-h"><h3>PROJECT SIZE MIX</h3><span class="det" onclick="go('tat')">Details ▸</span></div><div class="panel-b"><div class="chart-wrap"><canvas id="cCatPie"></canvas></div><div class="chartleg" id="catPieLeg"></div></div></div>
     </div>
     <div class="charts-row2">
       <div class="panel"><div class="panel-h"><h3>DESIGN &amp; DEV COMPLETED BY MONTH</h3><span class="det" onclick="go('cohort')">Details ▸</span></div><div class="panel-b"><div class="chart-wrap tall"><canvas id="cMonth"></canvas></div></div></div>
       <div class="panel"><div class="panel-h"><h3>AGING — PENDING DESIGNS</h3><span class="det" onclick="go('pending')">Details ▸</span></div><div class="panel-b"><div class="chart-wrap tall"><canvas id="cAging"></canvas></div></div></div>
+      <div class="panel"><div class="panel-h"><h3>PENDING SUMMARY</h3><span class="det" onclick="go('pending')">Details ▸</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="pendSummaryTbl"></table></div></div></div>
     </div>
     <div class="panel" style="margin-bottom:15px"><div class="panel-h"><h3>Insights</h3><span class="hint">what's going well · what needs attention</span></div><div class="panel-b" id="insights"></div></div>
-    <div class="panel" style="margin-bottom:15px"><div class="panel-h"><h3>PROJECT SIZE MIX</h3><span class="hint">share of projects by size category · click a slice</span></div><div class="panel-b"><div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap"><div class="chart-wrap" style="flex:0 0 240px;height:240px"><canvas id="cCatPie"></canvas></div><div class="chartleg" id="catPieLeg" style="flex:1;min-width:180px"></div></div></div></div>
     <div class="panel" style="margin-bottom:15px"><div class="panel-h"><h3>Monthly summary</h3><span class="hint">assigned · completed · on-time — click any number</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="monthlyTbl"></table></div></div></div>
     <div class="panel"><div class="panel-h"><h3>Designer summary</h3><span class="hint">total assigned · completed · on-time · avg net TAT — click any number</span></div><div class="panel-b flush"><div class="tbl-wrap"><table id="designerTbl"></table></div></div></div>
   </div>
@@ -489,7 +490,29 @@ function enrich(L){
   const totHold=(L.designAll||[]).reduce((a,v)=>a+(v.holdDays||0),0);
   const startD=L.designStart||((L.designAll||[])[0]&&L.designAll[0].assigned)||null;
   d.projTotalDays=(startD&&lastDone)?Math.max(0,Math.round((dayDiff(startD,lastDone)-totHold)*10)/10):null;
+  L.pendStage=pendStageOf(L);
   return L;
+}
+const PEND_STAGES=["Lead not updated","DEV assign pending","DEV assigned – not accepted","DEV in progress","Capacity not updated (LRM)","Design assign pending","Design in progress"];
+const PEND_GROUP={na:["Lead not updated","Capacity not updated (LRM)"],dev:["DEV assign pending","DEV assigned – not accepted","DEV in progress"],dsn:["Design assign pending","Design in progress"]};
+function pendStageOf(L){
+  const d=L.design;
+  if(d.status==="Completed")return null;                    // design done (incl. cancelled) → not pending
+  if(L.devReq==="")return "Lead not updated";               // P blank → untouched
+  if(L.devReq==="Yes"){
+    const dev=L.dev;
+    if(!dev||!dev.devName)return "DEV assign pending";
+    if(dev.finalStatus!=="Completed"){
+      if(!dev.acceptedOn)return "DEV assigned – not accepted";
+      return "DEV in progress";
+    }
+    // DEV completed → fall through to design stage
+  }else if(L.devReq==="No"){
+    if((L.billCap||0)<=1 && !L.capacityUpdated)return "Capacity not updated (LRM)";
+    // capacity updated → design stage
+  }
+  if(!d.assignedTo)return "Design assign pending";
+  return "Design in progress";
 }
 let DATA={leads:[],attendance:[],users:[]};
 
@@ -868,10 +891,11 @@ function agingTable(leads,ageFn,label){
 }
 function pendTab(w,btn){pendCur=w;if(btn){[...btn.parentNode.children].forEach(b=>b.classList.remove("on"));btn.classList.add("on");}renderPending();}
 function pendDetail(which){
-  const L=filtered();let leads,monthFn,title,mlbl;
-  if(which==="na"){leads=L.filter(x=>x.devReq==="");monthFn=x=>monthKey(x.hoto);title="Not updated";mlbl="HOTO month";}
-  else if(which==="dev"){leads=L.filter(x=>x.devReq==="Yes"&&x.dev&&!["Completed","Cancelled"].includes(x.dev.finalStatus));monthFn=x=>monthKey((x.dev&&x.dev.assignedOn))||monthKey(x.hoto);title="DEV pending";mlbl="DEV assigned month";}
-  else{leads=L.filter(x=>x.design.status==="Pending");monthFn=x=>monthKey(x.designStart)||monthKey(x.hoto);title="Design pending";mlbl="Design-start month";}
+  const L=filtered();const stages=PEND_GROUP[which];const leads=L.filter(x=>stages.includes(x.pendStage));
+  let monthFn,title,mlbl;
+  if(which==="na"){monthFn=x=>monthKey(x.hoto);title="Not updated / capacity pending";mlbl="HOTO month";}
+  else if(which==="dev"){monthFn=x=>monthKey((x.dev&&x.dev.assignedOn))||monthKey(x.hoto);title="DEV pending";mlbl="DEV assigned month";}
+  else{monthFn=x=>monthKey(x.designStart)||monthKey(x.hoto);title="Design pending";mlbl="Design-start month";}
   window._pendD={leads,monthFn,title,mlbl};
   const body=`<div class="dtab" id="pendDtab"><button class="on" onclick="pendDetailDim('month',this)">Monthly (${mlbl})</button><button onclick="pendDetailDim('city',this)">City-wise</button></div><div id="pendDBody"></div>`;
   showModal(title+" — breakdown",`${leads.length} pending`,body);pendDetailDim("month");
@@ -887,30 +911,31 @@ function pendDetailDim(dim,btn){
   document.getElementById("pendDBody").innerHTML=`<div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">${head}</th><th>Pending</th><th>%</th></tr></thead><tbody>`+
    entries.map(([k,arr])=>{const pct=total?Math.round(arr.length/total*100):0;return `<tr><td class="ml"><b>${disp(k)}</b></td><td><span class="mc-n" onclick='drillSet(${JSON.stringify(arr.map(a=>a.id))},"${(title+" "+disp(k)).replace(/"/g,"")}")'>${arr.length}</span></td><td class="mono" style="color:${pct>=25?'var(--red)':pct>=10?'var(--amber)':'var(--txt-2)'}">${pct}%</td></tr>`;}).join("")+`</tbody></table></div>`;
 }
+function renderPendSummary(){const L=filtered();
+  const rows=PEND_STAGES.map(stg=>({stg,arr:L.filter(x=>x.pendStage===stg)}));
+  const totalPend=L.filter(x=>x.pendStage).length;
+  const colOf=s=>/not updated/i.test(s)?"var(--red)":/Capacity/i.test(s)?"var(--amber)":/DEV/i.test(s)?"var(--blue)":"var(--teal)";
+  const el=$("#pendSummaryTbl");if(!el)return;
+  el.innerHTML=`<thead><tr><th class="ml" style="text-align:left">Pending stage</th><th>Leads</th><th>%</th></tr></thead><tbody>`+
+   rows.map(r=>{const pct=totalPend?Math.round(r.arr.length/totalPend*100):0;
+     return `<tr><td class="ml"><span style="display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:7px;background:${colOf(r.stg)}"></span>${r.stg}</td><td>${r.arr.length?`<span class="mc-n" onclick='drillBreakIds(${JSON.stringify(r.arr.map(a=>a.id))},"${r.stg.replace(/"/g,"")}")'>${r.arr.length}</span>`:'<span class="mc-n z">0</span>'}</td><td class="mono" style="color:${pct>=25?'var(--red)':pct>=10?'var(--amber)':'var(--txt-2)'}">${pct}%</td></tr>`;}).join("")+
+   `<tr style="font-weight:700;background:#F7F9FB"><td class="ml">Total pending</td><td>${totalPend}</td><td class="mono">100%</td></tr></tbody>`;
+}
 function renderPending(){
-  const L=filtered();let html="";
+  const L=filtered();const stages=PEND_GROUP[pendCur];const inG=L.filter(x=>stages.includes(x.pendStage));let html="";
+  const cardOf=(stg,sub,col)=>cardKpi(stg,L.filter(x=>x.pendStage===stg),sub,col);
   if(pendCur==="na"){
-    const na=L.filter(x=>x.devReq==="");
-    html=`<div class="kpis">${cardKpi("DEV status not updated",na,"P column blank — needs review","var(--red)")}${cardKpi("Total leads",L,"received","var(--ink)")}</div>`
-      +pendPanel("Ageing — not updated",agingTable(na,ageHoto,"Not updated"),`days since HOTO · click a bucket · <span class="det" onclick="pendDetail('na')">Details ▸</span>`)
-      +pendPanel("Leads — DEV status not updated",drillTable(na));
+    html=`<div class="kpis">${cardOf("Lead not updated","P blank — untouched lead","var(--red)")}${cardOf("Capacity not updated (LRM)","DEV not required, capacity = 1","var(--amber)")}${cardKpi("Total in this stage",inG,"awaiting first action","var(--ink)")}</div>`
+      +pendPanel("Ageing — not updated / capacity pending",agingTable(inG,ageHoto,"Not updated"),`days since HOTO · click a bucket · <span class="det" onclick="pendDetail('na')">Details ▸</span>`)
+      +pendPanel("Leads — not updated / capacity pending",drillTable(inG));
   }else if(pendCur==="dev"){
-    const req=L.filter(x=>x.devReq==="Yes");
-    const notAsg=req.filter(x=>!(x.dev&&x.dev.devName));
-    const assigned=req.filter(x=>x.dev&&x.dev.devName&&!["Completed","Cancelled"].includes(x.dev.finalStatus));
-    const pend=req.filter(x=>x.dev&&!["Completed","Cancelled"].includes(x.dev.finalStatus));
-    html=`<div class="kpis">${cardKpi("Marked DEV required",req,"site-visit needed","var(--solar)")}${cardKpi("Not assigned to DEV",notAsg,"no DEV engineer","var(--red)")}${cardKpi("Assigned, awaiting visit",assigned,"DEV in progress","var(--amber)")}${cardKpi("DEV pending (total)",pend,"not yet completed","var(--red)")}</div>`
-      +pendPanel("Ageing — DEV pending",agingTable(pend,ageHoto,"DEV pending"),`days since HOTO · click a bucket · <span class="det" onclick="pendDetail('dev')">Details ▸</span>`)
-      +pendPanel("DEV pending — list",drillTable(pend));
+    html=`<div class="kpis">${cardOf("DEV assign pending","no DEV engineer yet","var(--red)")}${cardOf("DEV assigned – not accepted","assigned, awaiting customer confirm","var(--amber)")}${cardOf("DEV in progress","accepted, visit pending","var(--blue)")}${cardKpi("Total DEV pending",inG,"marked DEV required","var(--ink)")}</div>`
+      +pendPanel("Ageing — DEV pending",agingTable(inG,ageHoto,"DEV pending"),`days since HOTO · click a bucket · <span class="det" onclick="pendDetail('dev')">Details ▸</span>`)
+      +pendPanel("DEV pending — list",drillTable(inG));
   }else{
-    const expected=L.filter(x=>x.devReq!=="Yes"||(x.dev&&x.dev.finalStatus==="Completed"));
-    const asgPend=expected.filter(x=>!x.design.assignedTo&&x.design.status==="Pending");
-    const dsnPend=expected.filter(x=>x.design.assignedTo&&x.design.pendKind==="Design pending");
-    const revPend=L.filter(x=>x.design.pendKind==="Revision pending");
-    const allPend=L.filter(x=>x.design.status==="Pending");
-    html=`<div class="kpis">${cardKpi("Design assign pending",asgPend,"no designer yet","var(--red)")}${cardKpi("Design pending",dsnPend,"assigned, not completed","var(--amber)")}${cardKpi("Revision pending",revPend,"revision open","#6E59C7")}${cardKpi("All design pending",allPend,"total open","var(--ink)")}</div>`
-      +pendPanel("Ageing — design pending",agingTable(allPend,x=>x.design.ageDays,"Design pending"),`days since assigned (or HOTO if unassigned) · click a bucket · <span class="det" onclick="pendDetail('dsn')">Details ▸</span>`)
-      +pendPanel("Design pending — list",drillTable(allPend));
+    html=`<div class="kpis">${cardOf("Design assign pending","no designer assigned","var(--red)")}${cardOf("Design in progress","assigned, completion pending","var(--amber)")}${cardKpi("Total design pending",inG,"DEV done / cap updated","var(--ink)")}</div>`
+      +pendPanel("Ageing — design pending",agingTable(inG,x=>x.design.ageDays,"Design pending"),`days since assigned (or HOTO if unassigned) · click a bucket · <span class="det" onclick="pendDetail('dsn')">Details ▸</span>`)
+      +pendPanel("Design pending — list",drillTable(inG));
   }
   $("#pendBody").innerHTML=html;
 }
@@ -1383,7 +1408,7 @@ function costGroupProjects(tab,key){const {units,name}=window._costD;const sub=u
 
 function renderAll(){
   _cardSets=[];
-  const steps=[["overview",renderOverview],["insights",renderInsights],["monthly",renderMonthly],["designerSummary",renderDesignerSummary],["funnel",renderFunnel],["leadBreak",renderLeadBreak],["dev",renderDev],["design",renderDesign],["pending",renderPending],["tat",renderTat],["cohort",renderCohort],["projects",renderProjects],["team",renderTeam],["cost",renderCost]];
+  const steps=[["overview",renderOverview],["pendSummary",renderPendSummary],["insights",renderInsights],["monthly",renderMonthly],["designerSummary",renderDesignerSummary],["funnel",renderFunnel],["leadBreak",renderLeadBreak],["dev",renderDev],["design",renderDesign],["pending",renderPending],["tat",renderTat],["cohort",renderCohort],["projects",renderProjects],["team",renderTeam],["cost",renderCost]];
   steps.forEach(([n,fn])=>{try{fn();}catch(e){console.error("render["+n+"] failed:",e);}});
   if(map){try{drawMarkers();}catch(e){console.error("map failed:",e);}}
 }
@@ -1504,6 +1529,7 @@ function buildLead(bid,rows,drows){
       tat:g==null?null:Math.round((g-hold)*10)/10,holdDays:hold,note:dv.rawStatus};});
   return enrich({id:bid,project:pick(m0,"Project name"),city:pick(m0,"City"),addr:pick(m0,"Address")||pick(m0,"Location of project"),
     lat,lng,capacity:parseFloat(pick(m0,"Required DC capacity as per Bill"))||design.finalCap||0,
+    billCap:parseFloat(pick(m0,"Required DC capacity as per Bill"))||0,
     devReq:required?"Yes":(reqRaw?"No":""),devStatus,
     hoto:isoDate(pick(m0,"Hoto Time_stamp")),received:isoDate(pick(m0,"Hoto Time_stamp")),capacityUpdated:isoDate(pick(m0,"Capacity Updated date")),
     dev,devHistory:devHistory.length?devHistory:undefined,
