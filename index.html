@@ -405,8 +405,8 @@ const GIDS={master:"1484820577",design:"392178120",attendance:"1387164875",check
 const APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbx3Owv3vO9qq1plv4mJXC8GOw0cxoauqSTKEoNzlxDxLJRqEcAdjYFdKUJjyPfq5b4T/exec"; // deployed Apps Script feed
 var DEV_TAT_START="DEV Accepted timestamp"; // change to "Asssigned Time_Stamp" if you prefer
 const ONSITE_KM=0.5, TODAY=new Date("2026-06-26");
-const SLA={first:{Resi:{dev:1,design:2},Alpha:{dev:1,design:2},Beta:{dev:2,design:5},Gamma:{dev:3,design:8},Omega:{dev:0,design:0}},
-           revision:{Resi:{dev:1,design:3},Alpha:{dev:1,design:3},Beta:{dev:1,design:6},Gamma:{dev:2,design:9},Omega:{dev:0,design:0}}};
+const SLA={first:{Resi:{dev:1,design:2},Alpha:{dev:1,design:3},Beta:{dev:2,design:6},Gamma:{dev:3,design:7},Omega:{dev:0,design:8}},
+           revision:{Resi:{dev:1,design:2},Alpha:{dev:1,design:3},Beta:{dev:1,design:5},Gamma:{dev:2,design:6},Omega:{dev:0,design:7}}};
 const catFromCap=k=>k<=10?"Resi":k<=30?"Alpha":k<=100?"Beta":k<=200?"Gamma":"Omega";
 
 /* ====== SAMPLE DATA ====== */
@@ -458,7 +458,7 @@ function enrich(L){
   d.grossTat=grossD;
   d.designTat=grossD==null?null:Math.round((grossD-d.holdDays)*10)/10;
   d.scenario=d.cancelled?"cancelled / area not fit":(d.revisions>0?"revision":"first");
-  d.target=d.cancelled?0:SLA.first[L.cat].design;
+  d.target=d.cancelled?0:((d.revisions>0?SLA.revision:SLA.first)[L.cat]?.design||0);
   d.slaState=d.cancelled?"—":d.status!=="Completed"?"—":d.target===0?"Manual":d.designTat==null?"—":d.designTat<=d.target?"On time":"Delayed";
   d.variance=(d.target&&d.designTat!=null)?Math.round((d.designTat-d.target)*10)/10:null;
   // granular pending: original not done = "Design pending"; original done but revision open = "Revision pending"
@@ -472,6 +472,23 @@ function enrich(L){
   // all related records (revisions / re-visits) — synthesise from single record if no explicit history
   L.devAll=(L.devHistory&&L.devHistory.length)?L.devHistory:(L.dev?[{rev:"Original DEV",devName:L.dev.devName,permission:L.dev.permission,assignedOn:L.dev.assignedOn,acceptedOn:L.dev.acceptedOn,blocks:L.dev.blocks,completed:L.dev.completedDate,status:L.dev.finalStatus,reschedules:L.dev.reschedules,distKm:L.dev.distKm,onsite:L.dev.onsite,tat:L.dev.devTat,holdDays:L.dev.holdDays,note:""}]:[]);
   L.designAll=(L.designHistory&&L.designHistory.length)?L.designHistory:[{rev:d.revisions>0?"Latest (R"+d.revisions+")":"Original",designer:d.designer,type:d.type,assigned:d.assigned,completed:d.completed,status:d.status,tat:d.designTat,target:d.target,sla:d.slaState,holdDays:d.holdDays,note:d.cancelReason||""}];
+  // per-version SLA: original uses first-design target, revisions use revision target
+  (L.designAll||[]).forEach((v,i)=>{const isRev=i>0;
+    v.target=v.cancelled?0:(((isRev?SLA.revision:SLA.first)[L.cat]||{}).design||0);
+    v.sla=v.cancelled?"—":(v.status!=="Completed"?"—":(v.target===0?"Manual":(v.tat==null?"—":(v.tat<=v.target?"On time":"Delayed"))));
+    v.variance=(v.target&&v.tat!=null)?Math.round((v.tat-v.target)*10)/10:null;});
+  // project-level rollup — DELAY STATUS from individual design TAT (each version vs its own target)
+  const measV=(L.designAll||[]).filter(v=>v.status==="Completed"&&!v.cancelled&&v.target>0&&v.tat!=null);
+  d.projMeasured=measV.length;
+  d.projDelayed=measV.filter(v=>v.tat>v.target).length;
+  d.projOnTime=measV.filter(v=>v.tat<=v.target).length;
+  d.projSlaState=measV.length?(d.projDelayed>0?"Delayed":"On time"):(d.cancelled?"—":(d.status==="Completed"?"Manual":"—"));
+  // project-wise TOTAL days — designStart → last design completion, net of all design holds (informational only)
+  const doneDates=(L.designAll||[]).map(v=>v.completed).filter(Boolean).sort();
+  const lastDone=doneDates.length?doneDates[doneDates.length-1]:null;
+  const totHold=(L.designAll||[]).reduce((a,v)=>a+(v.holdDays||0),0);
+  const startD=L.designStart||((L.designAll||[])[0]&&L.designAll[0].assigned)||null;
+  d.projTotalDays=(startD&&lastDone)?Math.max(0,Math.round((dayDiff(startD,lastDone)-totHold)*10)/10):null;
   return L;
 }
 let DATA={leads:[],attendance:[],users:[]};
@@ -950,8 +967,8 @@ function renderTat(){const L=filtered();const total=L.length;
   $("#slaMatrix").innerHTML=`<thead><tr><th>Cat</th><th>DC band</th><th>DEV</th><th>Design</th><th>Rev. design</th></tr></thead><tbody>`+
    [["Alpha","≤30"],["Beta","30–100"],["Gamma","100–200"],["Omega","≥200"]].map(([c,b])=>{const f=SLA.first[c],r=SLA.revision[c],d=v=>v===0?'<span class="muted">manual</span>':v+'d';return `<tr><td><span class="cat cat-${c}">${c}</span></td><td class="mono" style="font-size:11px">${b}</td><td>${d(f.dev)}</td><td>${d(f.design)}</td><td>${d(r.design)}</td></tr>`;}).join("")+`</tbody>`;
   const comp=L.filter(x=>x.design.status==="Completed");
-  $("#delayTbl").innerHTML=`<thead><tr><th>Project</th><th>Cat</th><th>Target</th><th>Actual</th><th>Delay</th><th>Status</th></tr></thead><tbody>`+
-   comp.slice(0,200).map(L0=>{const d=L0.design;if(d.target===0)return `<tr><td>${L0.project}</td><td><span class="cat cat-${L0.cat}">${L0.cat}</span></td><td colspan="2" class="muted">no SLA</td><td>—</td><td>${statusPill("—")}</td></tr>`;const c=d.variance>0?"over":"under";return `<tr><td>${L0.project}</td><td><span class="cat cat-${L0.cat}">${L0.cat}</span></td><td class="tat-cell">${d.target}d</td><td class="tat-cell">${d.designTat}d</td><td class="tat-cell ${c}">${d.variance>0?'+':''}${d.variance}d</td><td>${statusPill(d.slaState)}</td></tr>`;}).join("")+`</tbody>`;
+  $("#delayTbl").innerHTML=`<thead><tr><th>Project</th><th>Cat</th><th>Target</th><th>Design TAT</th><th>Variance</th><th>Project total days</th><th>Status</th></tr></thead><tbody>`+
+   comp.slice(0,200).map(L0=>{const d=L0.design;const tot=d.projTotalDays!=null?d.projTotalDays+"d":"—";if(d.target===0)return `<tr><td>${L0.project}</td><td><span class="cat cat-${L0.cat}">${L0.cat}</span></td><td colspan="3" class="muted">no SLA</td><td class="tat-cell">${tot}</td><td>${statusPill("—")}</td></tr>`;const c=d.variance>0?"over":"under";return `<tr><td>${L0.project}</td><td><span class="cat cat-${L0.cat}">${L0.cat}</span></td><td class="tat-cell">${d.target}d</td><td class="tat-cell">${d.designTat}d</td><td class="tat-cell ${c}">${d.variance>0?'+':''}${d.variance}d</td><td class="tat-cell">${tot}</td><td>${statusPill(d.projSlaState)}</td></tr>`;}).join("")+`</tbody>`;
 }
 function openTatDetail(type){
   const L=filtered();
@@ -1038,14 +1055,14 @@ function renderCohort(){const L=filtered();const months=[...new Set(L.map(x=>mon
 /* ====== PROJECTS ====== */
 function renderProjects(){const q=($("#projSearch").value||"").toLowerCase();
   const L=filtered().filter(x=>!q||(x.project+x.id+x.city+x.cat).toLowerCase().includes(q));
-  $("#projTbl").innerHTML=`<thead><tr><th>Project</th><th>City</th><th>Size</th><th>HOTO date</th><th>DEV req.</th><th>DEV name</th><th>DEV completed</th><th>DEV TAT</th><th>Re-visits</th><th>Design assigned</th><th>Design completed</th><th>Revisions</th><th>Exp. TAT</th><th>Actual TAT</th><th>Delay</th><th></th></tr></thead><tbody>`+
+  $("#projTbl").innerHTML=`<thead><tr><th>Project</th><th>City</th><th>Size</th><th>HOTO date</th><th>DEV req.</th><th>DEV name</th><th>DEV completed</th><th>DEV TAT</th><th>Re-visits</th><th>Design assigned</th><th>Design completed</th><th>Revisions</th><th>Exp. TAT</th><th>Design TAT</th><th>Project total days</th><th>Delay status</th><th></th></tr></thead><tbody>`+
    L.map(L0=>{const d=L0.design;const dev=L0.dev;
      const revisits=Math.max(0,(L0.devAll||[]).length-1);
      let delay='<span class="muted">—</span>';
      if(d.cancelled)delay='<span class="pill p-gray"><span class="d"></span>area not fit / cancelled</span>';
-     else if(d.status==="Completed"){if(d.target===0)delay='<span class="pill p-gray"><span class="d"></span>manual</span>';
-       else if(d.slaState==="On time")delay='<span class="pill p-green"><span class="d"></span>On time</span>';
-       else if(d.slaState==="Delayed")delay=`<span class="pill p-red"><span class="d"></span>${d.variance} days delay</span>`;}
+     else if(d.status==="Completed"){if(d.projSlaState==="Manual"||d.projSlaState==="—")delay='<span class="pill p-gray"><span class="d"></span>manual</span>';
+       else if(d.projSlaState==="On time")delay='<span class="pill p-green"><span class="d"></span>On time</span>';
+       else if(d.projSlaState==="Delayed")delay=`<span class="pill p-red"><span class="d"></span>${d.projDelayed} design${d.projDelayed>1?'s':''} delayed</span>`;}
      else if(d.status==="Cancelled")delay='<span class="pill p-red"><span class="d"></span>Cancelled</span>';
      else if(d.status==="Pending")delay=`<span class="pill p-amber"><span class="d"></span>pending${d.ageDays!=null?" "+d.ageDays+"d":""}</span>`;
      return `<tr><td><b>${L0.project}</b><br><span class="mono muted" style="font-size:10px">${L0.id}</span></td>
@@ -1061,9 +1078,10 @@ function renderProjects(){const q=($("#projSearch").value||"").toLowerCase();
        <td style="text-align:center">${d.revisions||0}</td>
        <td class="tat-cell">${d.target?d.target+"d":"—"}</td>
        <td class="tat-cell">${d.designTat!=null?d.designTat+"d":"—"}</td>
+       <td class="tat-cell">${d.projTotalDays!=null?d.projTotalDays+"d":"—"}</td>
        <td>${delay}</td>
        <td style="white-space:nowrap"><button class="minibtn" onclick='openDevAll("${L0.id}")'>DEV</button><button class="minibtn" onclick='openDesignAll("${L0.id}")'>Design</button><button class="minibtn j" onclick='openLead("${L0.id}")'>Journey</button></td></tr>`;}).join("")+`</tbody>`;
-  if(!L.length)$("#projTbl").innerHTML+=`<tbody><tr><td colspan="16" style="text-align:center;padding:30px" class="muted">No projects match.</td></tr></tbody>`;}
+  if(!L.length)$("#projTbl").innerHTML+=`<tbody><tr><td colspan="17" style="text-align:center;padding:30px" class="muted">No projects match.</td></tr></tbody>`;}
 
 /* ====== TEAM ====== */
 function designerStats(leads,includeRoster){
