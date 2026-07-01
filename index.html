@@ -1258,7 +1258,10 @@ function renderJourney(L){
   items.push({type:"recvd",date:drcv||"",t:"Design data received",m:`${drcv||"—"} · source: ${src}`});
   (L.designAll||[]).forEach(d=>{const canc=d.cancelled;const st=canc?"Cancelled":d.status;
     items.push({type:"dsn",bad:canc||st!=="Completed",date:d.completed||d.assigned||drcv||"",t:`Design ${d.rev||""} — ${d.designer||"—"} (${d.type||""}) · ${st}`,m:`assigned ${d.assigned||"—"} → completed ${d.completed||"—"} · net TAT ${d.tat==null?"—":d.tat+"d"}${d.holdDays?` (−${d.holdDays}d hold)`:""}${d.sla&&d.sla!=="—"?" · "+d.sla:""}${d.note?" · "+d.note:""}`});});
-  const fixed=items.slice(0,1);const flow=items.slice(1).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const fixed=items.slice(0,1);let flow=items.slice(1).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  // keep "Design data received" immediately before the first design entry regardless of its date
+  const ri=flow.findIndex(i=>i.type==="recvd");
+  if(ri>=0){const [rc]=flow.splice(ri,1);const di=flow.findIndex(i=>i.type==="dsn");if(di>=0)flow.splice(di,0,rc);else flow.push(rc);}
   const all=[...fixed,...flow];
   const tl=`<div class="tl">`+all.map(i=>`<div class="tl-it ${i.type==="dev"?"jdev":i.type==="dsn"?"jdsn":i.type==="recvd"?"jrcv":""} ${i.bad?"jbad":""}"><div class="t">${i.t}</div><div class="m">${i.m}</div></div>`).join("")+`</div>`;
   return `<div class="jsum">${journeySummary(L)}</div>`+tl;
