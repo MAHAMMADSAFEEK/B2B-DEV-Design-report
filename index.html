@@ -243,6 +243,10 @@ td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:middle}t
 .userbox .role{display:inline-block;font-size:9px;background:rgba(255,255,255,.18);padding:1px 6px;border-radius:5px;margin-left:5px;letter-spacing:.04em}
 .mback{cursor:pointer;font-size:26px;line-height:1;color:#9FB3C8;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:.12s}
 .mback:hover{background:rgba(255,255,255,.12);color:#fff}
+.flowchart{overflow-x:auto;padding:4px 0}
+.fnode{cursor:pointer}
+.fnode:hover rect{opacity:.88}
+.fnode rect{transition:opacity .12s}
 </style>
 </head>
 <body>
@@ -735,27 +739,48 @@ function fnlStatus(x,mode){
 function funnelDrill(ids,title,mode){
   const leads=leadsByIds(ids);window._fnl={leads,title,mode:mode||"lead"};
   const who=(mode==="design")?"By designer":"By DEV";
-  const body=`<div class="dtab" id="fnlTab"><button class="on" onclick="fnlDim('city',this)">By city</button><button onclick="fnlDim('who',this)">${who}</button><button onclick="fnlDim('size',this)">By size</button></div><div id="fnlBody"></div>`;
+  const body=`<div class="dtab" id="fnlTab"><button class="on" onclick="fnlDim('city',this)">By city</button><button onclick="fnlDim('size',this)">By size</button><button onclick="fnlDim('hoto',this)">HOTO month</button><button onclick="fnlDim('asg',this)">Assigned month</button><button onclick="fnlDim('cmp',this)">Completed month</button><button onclick="fnlDim('who',this)">${who}</button></div><div id="fnlBody"></div>`;
   showModal(title,`${leads.length} lead(s)${mode&&mode!=="lead"?" · on-time / delay / pending":""}`,body);fnlDim("city");
+}
+function fnlMonth(x,which){
+  const m=window._fnl.mode;
+  if(which==="asg")return m==="design"?monthKey(x.design.assigned):m==="dev"?monthKey(x.dev&&x.dev.assignedOn):monthKey(x.designStart);
+  return m==="design"?monthKey(x.design.completed):m==="dev"?monthKey(x.dev&&x.dev.completedDate):monthKey(x.design.completed);
 }
 function fnlDim(dim,btn){
   if(btn){[...btn.parentNode.children].forEach(b=>b.classList.remove("on"));btn.classList.add("on");}
-  const {leads,mode,title}=window._fnl;const sla=mode==="dev"||mode==="design";
-  const keyFn=dim==="city"?(x=>x.city||"—"):dim==="size"?(x=>x.cat):(mode==="design"?(x=>x.design.assignedTo||"—"):(x=>(x.dev&&x.dev.devName)||"—"));
+  const {leads,mode,title}=window._fnl;const sla=mode==="dev"||mode==="design";const isMonth=(dim==="hoto"||dim==="asg"||dim==="cmp");
+  const keyFn=dim==="city"?(x=>x.city||"—"):dim==="size"?(x=>x.cat):dim==="hoto"?(x=>monthKey(x.hoto)||"—"):dim==="asg"?(x=>fnlMonth(x,"asg")||"—"):dim==="cmp"?(x=>fnlMonth(x,"cmp")||"—"):(mode==="design"?(x=>x.design.assignedTo||"—"):(x=>(x.dev&&x.dev.devName)||"—"));
   const grp={};leads.forEach(x=>{const k=keyFn(x)||"—";(grp[k]=grp[k]||[]).push(x);});
   let entries=Object.entries(grp);
-  entries=dim==="size"?entries.sort((a,b)=>CAT_ORDER.indexOf(a[0])-CAT_ORDER.indexOf(b[0])):entries.sort((a,b)=>b[1].length-a[1].length);
-  const head=dim==="city"?"City":dim==="size"?"Size category":(mode==="design"?"Designer":"DEV");
-  const disp=dim==="size"?(k=>`<span class="cat cat-${k}">${k}</span>`):(k=>k);
+  entries=isMonth?entries.sort((a,b)=>String(a[0]).localeCompare(String(b[0]))):dim==="size"?entries.sort((a,b)=>CAT_ORDER.indexOf(a[0])-CAT_ORDER.indexOf(b[0])):entries.sort((a,b)=>b[1].length-a[1].length);
+  const head=dim==="city"?"City":dim==="size"?"Size category":dim==="hoto"?"HOTO month":dim==="asg"?"Assigned month":dim==="cmp"?"Completed month":(mode==="design"?"Designer":"DEV");
+  const disp=dim==="size"?(k=>`<span class="cat cat-${k}">${k}</span>`):isMonth?(k=>k==="—"?"—":monthLbl(k)):(k=>k);
   const cell=(arr,k,lbl,col)=>arr.length?`<span class="mc-n" style="${col?'color:'+col:''}" onclick='drillSet(${JSON.stringify(arr.map(z=>z.id))},"${(title+" · "+k+(lbl?" · "+lbl:"")).replace(/"/g,"")}")'>${arr.length}</span>`:`<span class="mc-n z">0</span>`;
+  const fnlDone=x=>mode==="dev"?(x.dev&&x.dev.finalStatus==="Completed"):(x.design.status==="Completed");
+  const hExtra=dim==="hoto";const totalN=leads.length;
   const rows=entries.map(([k,arr])=>{const on=arr.filter(x=>fnlStatus(x,mode)==="onTime"),dl=arr.filter(x=>fnlStatus(x,mode)==="delayed"),pd=arr.filter(x=>fnlStatus(x,mode)==="pending");
-    return `<tr><td class="ml">${disp(k)}</td><td>${cell(arr,k,"")}</td>`+(sla?`<td>${cell(on,k,"on-time","var(--green)")}</td><td>${cell(dl,k,"delayed","var(--red)")}</td><td>${cell(pd,k,"pending","var(--amber)")}</td>`:"")+`</tr>`;}).join("");
-  document.getElementById("fnlBody").innerHTML=`<div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">${head}</th><th>Count</th>`+(sla?`<th>On-time</th><th>Delayed</th><th>Pending</th>`:"")+`</tr></thead><tbody>${rows||'<tr><td colspan="5" class="muted" style="padding:16px;text-align:center">None.</td></tr>'}</tbody></table></div>`;
+    const done=arr.filter(fnlDone);const tpct=totalN?Math.round(arr.length/totalN*100):0;const cpct=arr.length?Math.round(done.length/arr.length*100):0;
+    return `<tr><td class="ml">${disp(k)}</td><td>${cell(arr,k,"")}</td>`
+      +(hExtra?`<td class="mono">${tpct}%</td><td>${cell(done,k,"completed","var(--green)")}</td><td class="mono" style="color:${cpct>=80?'var(--green)':cpct>=50?'var(--amber)':'var(--red)'}">${cpct}%</td>`:"")
+      +(sla?`<td>${cell(on,k,"on-time","var(--green)")}</td><td>${cell(dl,k,"delayed","var(--red)")}</td><td>${cell(pd,k,"pending","var(--amber)")}</td>`:"")+`</tr>`;}).join("");
+  document.getElementById("fnlBody").innerHTML=`<div class="tbl-wrap"><table class="mtbl"><thead><tr><th class="ml" style="text-align:left">${head}</th><th>Count</th>`+(hExtra?`<th>% of total</th><th>Completion</th><th>Completion %</th>`:"")+(sla?`<th>On-time</th><th>Delayed</th><th>Pending</th>`:"")+`</tr></thead><tbody>${rows||'<tr><td colspan="8" class="muted" style="padding:16px;text-align:center">None.</td></tr>'}</tbody></table></div>`;
 }
-function fbar(label,arr,color,denom,mode){const pct=denom?Math.round(arr.length/denom*100):100;return `<div class="fn"><div class="fn-side">${label}</div><div class="fn-bar" style="width:${Math.max(18,pct)}%;background:${color}" onclick='funnelDrill(${JSON.stringify(arr.map(a=>a.id))},"${label.replace(/"/g,"")}","${mode||"lead"}")'><b>${arr.length}</b><span>${denom?pct+"% of leads":"unique leads"}</span></div></div>`;}
-function fmini(label,arr,color,mode){return `<div class="mini" style="background:${color}" onclick='funnelDrill(${JSON.stringify(arr.map(a=>a.id))},"${label.replace(/"/g,"")}","${mode||"lead"}")'><b>${arr.length}</b><span>${label}</span></div>`;}
+let _fnlSets=[];
+function fReg(ids,title,mode){return _fnlSets.push({ids:[...new Set(ids)],title,mode:mode||"lead"})-1;}
+function funnelDrillSet(i){const c=_fnlSets[i];if(c)funnelDrill(c.ids,c.title,c.mode);}
+function fWrap(label){const words=String(label).split(" ");if(label.length<=16||words.length<2)return [label];let l1="",l2="";words.forEach(w=>{if((l1+" "+w).trim().length<=16&&!l2)l1=(l1+" "+w).trim();else l2=(l2+" "+w).trim();});return [l1,l2];}
+function fbox(x,y,w,h,color,count,label,ids,mode){const i=fReg(ids,label,mode);const lines=fWrap(label);
+  const lt=lines.length===2?`<text x="${x+15}" y="${y+h-20}" fill="#fff" font-size="11.5" opacity=".95">${lines[0]}</text><text x="${x+15}" y="${y+h-7}" fill="#fff" font-size="11.5" opacity=".95">${lines[1]}</text>`:`<text x="${x+15}" y="${y+h-12}" fill="#fff" font-size="12" opacity=".95">${lines[0]}</text>`;
+  return `<g class="fnode" onclick="funnelDrillSet(${i})"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${color}"/><text x="${x+15}" y="${y+31}" fill="#fff" font-size="23" font-weight="700" style="font-family:'Space Grotesk',sans-serif">${count}</text>${lt}</g>`;}
+function fbus(parents,childXs,childY,busY){const xs=[...parents.map(p=>p.x),...childXs];const mn=Math.min(...xs),mx=Math.max(...xs);
+  let o=parents.map(p=>`<path d="M${p.x},${p.y} L${p.x},${busY}" stroke="#B4C0CE" stroke-width="2" fill="none"/>`).join("");
+  o+=`<path d="M${mn},${busY} L${mx},${busY}" stroke="#B4C0CE" stroke-width="2" fill="none"/>`;
+  o+=childXs.map(cx=>`<path d="M${cx},${busY} L${cx},${childY-8}" stroke="#B4C0CE" stroke-width="2" fill="none" marker-end="url(#fnarr)"/>`).join("");
+  return o;}
+function fslabel(y,t){return `<text x="12" y="${y}" fill="#5B6B7B" font-size="12" font-weight="600">${t}</text>`;}
 function renderFunnel(){
-  const all=filtered();const total=all.length;
+  _fnlSets=[];const all=filtered();const total=all.length;
   const qual=all.filter(x=>x.qualified);const dup=all.filter(x=>!x.qualified);
   const req=qual.filter(x=>x.devReqState==="Required");
   const notReq=qual.filter(x=>x.devReqState==="Not required");
@@ -771,30 +796,31 @@ function renderFunnel(){
   const dProc=dpop.filter(x=>x.design.status!=="Completed"&&x.design.assignedTo);
   let designCnt=0,revCnt=0;const dCompIds=[],rCompIds=[];
   dpop.forEach(x=>{(x.designAll||[]).forEach((v,i)=>{if(v.status==="Completed"&&!v.cancelled){if(i===0){designCnt++;dCompIds.push(x.id);}else{revCnt++;rCompIds.push(x.id);}}});});
-  const g=(n)=>`display:grid;grid-template-columns:repeat(${n},1fr);gap:10px`;
-  $("#funnel").innerHTML=`
-   <div class="funnel">
-     ${fbar("Total leads",all,"var(--ink)",null,"lead")}
-     ${fbar("Qualified leads",qual,"#1D4FAB",total,"lead")}
-     <div class="fn"><div class="fn-side"></div><div class="muted" style="font-size:11.5px;padding:2px 4px">${dup.length} duplicate ${dup.length===1?"entry":"entries"} removed (Master M column)</div></div>
-
-     <div class="fn"><div class="fn-side">DEV requirement</div><div class="b2" style="${g(3)}">
-       ${fmini("DEV required",req,"var(--solar)","lead")}${fmini("Not required",notReq,"var(--teal)","lead")}${fmini("Not assigned",notAsg,"#94A3B8","lead")}
-     </div></div>
-
-     <div class="fn"><div class="fn-side">DEV (if required)</div><div class="b2" style="${g(4)}">
-       ${fmini("DEV completed",devDone,"var(--green)","dev")}${fmini("In process",devProc,"var(--blue)","dev")}${fmini("Pending",devPend,"var(--amber)","dev")}${fmini("Cancelled",devCanc,"var(--red)","dev")}
-     </div></div>
-
-     <div class="fn"><div class="fn-side">Design</div><div class="b2" style="${g(4)}">
-       ${fmini("Capacity not updated",dCapNo,"#94A3B8","design")}${fmini("Not assigned",dNotAsg,"var(--red)","design")}${fmini("In process",dProc,"var(--amber)","design")}${fmini("Completed",dDone,"var(--green)","design")}
-     </div></div>
-
-     <div class="fn"><div class="fn-side">Design output</div><div class="b2" style="${g(2)}">
-       <div class="mini" style="background:#0E9488" onclick='funnelDrill(${JSON.stringify([...new Set(dCompIds)])},"Designs completed","design")'><b>${designCnt}</b><span>Designs completed</span></div>
-       <div class="mini" style="background:#6E59C7" onclick='funnelDrill(${JSON.stringify([...new Set(rCompIds)])},"Revisions completed","design")'><b>${revCnt}</b><span>Revisions completed</span></div>
-     </div></div>
-   </div>`;
+  const svg=`<div class="flowchart"><svg viewBox="0 0 1180 700" width="100%" style="min-width:1000px;font-family:Inter,sans-serif">
+    <defs><marker id="fnarr" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#B4C0CE"/></marker></defs>
+    ${fslabel(56,"Total leads")}${fslabel(146,"Qualified")}${fslabel(262,"DEV requirement")}${fslabel(382,"DEV (if required)")}${fslabel(512,"Design")}${fslabel(632,"Design output")}
+    <path d="M590,80 L590,110" stroke="#B4C0CE" stroke-width="2" fill="none" marker-end="url(#fnarr)"/>
+    ${fbus([{x:590,y:170}],[220,590,960],230,200)}
+    ${fbus([{x:220,y:302}],[112,289,466,643],350,326)}
+    ${fbus([{x:112,y:422},{x:590,y:302}],[420,615,810,1005],480,452)}
+    ${fbus([{x:1005,y:552}],[540,800],600,576)}
+    ${fbox(290,20,600,60,"var(--ink)",total,"unique leads",all.map(a=>a.id),"lead")}
+    <g class="fnode" onclick="funnelDrillSet(${fReg(qual.map(a=>a.id),"Qualified leads","lead")})"><rect x="290" y="110" width="600" height="60" rx="10" fill="#1D4FAB"/><text x="305" y="141" fill="#fff" font-size="23" font-weight="700" style="font-family:'Space Grotesk',sans-serif">${qual.length}</text><text x="305" y="158" fill="#fff" font-size="12" opacity=".95">${total?Math.round(qual.length/total*100):0}% of leads · ${dup.length} duplicate removed</text></g>
+    ${fbox(120,230,200,72,"var(--solar)",req.length,"DEV required",req.map(a=>a.id),"lead")}
+    ${fbox(490,230,200,72,"var(--teal)",notReq.length,"Not required",notReq.map(a=>a.id),"lead")}
+    ${fbox(860,230,200,72,"#94A3B8",notAsg.length,"Not assigned",notAsg.map(a=>a.id),"lead")}
+    ${fbox(30,350,165,72,"var(--green)",devDone.length,"DEV completed",devDone.map(a=>a.id),"dev")}
+    ${fbox(207,350,165,72,"var(--blue)",devProc.length,"In process",devProc.map(a=>a.id),"dev")}
+    ${fbox(384,350,165,72,"var(--amber)",devPend.length,"Pending",devPend.map(a=>a.id),"dev")}
+    ${fbox(561,350,165,72,"var(--red)",devCanc.length,"Cancelled",devCanc.map(a=>a.id),"dev")}
+    ${fbox(330,480,180,72,"#94A3B8",dCapNo.length,"Capacity not updated",dCapNo.map(a=>a.id),"design")}
+    ${fbox(525,480,180,72,"var(--red)",dNotAsg.length,"Not assigned",dNotAsg.map(a=>a.id),"design")}
+    ${fbox(720,480,180,72,"var(--amber)",dProc.length,"In process",dProc.map(a=>a.id),"design")}
+    ${fbox(915,480,180,72,"var(--green)",dDone.length,"Completed",dDone.map(a=>a.id),"design")}
+    ${fbox(430,600,220,64,"#0E9488",designCnt,"Designs completed",[...new Set(dCompIds)],"design")}
+    ${fbox(690,600,220,64,"#6E59C7",revCnt,"Revisions completed",[...new Set(rCompIds)],"design")}
+  </svg></div>`;
+  $("#funnel").innerHTML=svg;
 }
 function renderLeadBreak(){
   const L=filtered();const total=L.length;
