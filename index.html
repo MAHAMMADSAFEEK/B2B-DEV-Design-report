@@ -755,7 +755,9 @@ function fnlDim(dim,btn){
   let entries=Object.entries(grp);
   entries=isMonth?entries.sort((a,b)=>String(a[0]).localeCompare(String(b[0]))):dim==="size"?entries.sort((a,b)=>CAT_ORDER.indexOf(a[0])-CAT_ORDER.indexOf(b[0])):entries.sort((a,b)=>b[1].length-a[1].length);
   const head=dim==="city"?"City":dim==="size"?"Size category":dim==="hoto"?"HOTO month":dim==="asg"?"Assigned month":dim==="cmp"?"Completed month":(mode==="design"?"Designer":"DEV");
-  const disp=dim==="size"?(k=>`<span class="cat cat-${k}">${k}</span>`):isMonth?(k=>k==="—"?"—":monthLbl(k)):(k=>k);
+  const dTypeMap={};if(dim==="who"&&mode==="design")leads.forEach(x=>(x.designAll||[]).forEach(v=>{if(v.designer&&v.designer!=="—"){if(!dTypeMap[v.designer]||v.type==="External")dTypeMap[v.designer]=v.type;}}));
+  const iBadge=t=>`<span style="font-size:9px;padding:1px 6px;border-radius:5px;color:#fff;margin-right:6px;background:${t==="External"?"#6E59C7":"#2563C9"}">${t==="External"?"EXT":"INT"}</span>`;
+  const disp=dim==="size"?(k=>`<span class="cat cat-${k}">${k}</span>`):isMonth?(k=>k==="—"?"—":monthLbl(k)):(dim==="who"&&mode==="design")?(k=>iBadge(dTypeMap[k]||"Internal")+k):(k=>k);
   const cell=(arr,k,lbl,col)=>arr.length?`<span class="mc-n" style="${col?'color:'+col:''}" onclick='drillSet(${JSON.stringify(arr.map(z=>z.id))},"${(title+" · "+k+(lbl?" · "+lbl:"")).replace(/"/g,"")}")'>${arr.length}</span>`:`<span class="mc-n z">0</span>`;
   const fnlDone=x=>mode==="dev"?(x.dev&&x.dev.finalStatus==="Completed"):(x.design.status==="Completed");
   const hExtra=dim==="hoto";const totalN=leads.length;
@@ -790,35 +792,47 @@ function renderFunnel(){
   const devProc=req.filter(x=>x.pendStage==="DEV in progress");
   const devPend=req.filter(x=>["DEV assign pending","DEV assigned – not accepted","DEV approval pending","DEV rejected (audit)"].includes(x.pendStage));
   const dpop=qual.filter(x=>x.devReqState==="Not required"||(x.dev&&x.dev.finalStatus==="Completed"));
+  const v0Done=x=>{const v=(x.designAll||[])[0];return v&&v.status==="Completed";};
+  const v0Asg=x=>{const v=(x.designAll||[])[0];return v&&v.designer&&v.designer!=="—";};
   const dCapNo=dpop.filter(x=>x.pendStage==="Capacity not updated (LRM)");
-  const dDone=dpop.filter(x=>x.design.status==="Completed");
-  const dNotAsg=dpop.filter(x=>x.design.status!=="Completed"&&!x.design.assignedTo&&x.pendStage!=="Capacity not updated (LRM)");
-  const dProc=dpop.filter(x=>x.design.status!=="Completed"&&x.design.assignedTo);
-  let designCnt=0,revCnt=0;const dCompIds=[],rCompIds=[];
-  dpop.forEach(x=>{(x.designAll||[]).forEach((v,i)=>{if(v.status==="Completed"&&!v.cancelled){if(i===0){designCnt++;dCompIds.push(x.id);}else{revCnt++;rCompIds.push(x.id);}}});});
-  const svg=`<div class="flowchart"><svg viewBox="0 0 1180 700" width="100%" style="min-width:1000px;font-family:Inter,sans-serif">
+  const dDone=dpop.filter(x=>x.pendStage!=="Capacity not updated (LRM)"&&v0Done(x));                 // FIRST design completed
+  const dProc=dpop.filter(x=>x.pendStage!=="Capacity not updated (LRM)"&&!v0Done(x)&&v0Asg(x));       // FIRST design in process
+  const dNotAsg=dpop.filter(x=>x.pendStage!=="Capacity not updated (LRM)"&&!v0Done(x)&&!v0Asg(x));
+  // design output — version level
+  let firstComp=0,revReq=0,revProc=0,revComp=0;const firstCompIds=[],revReqIds=[],revProcIds=[],revCompIds=[];
+  dpop.forEach(x=>{(x.designAll||[]).forEach((v,i)=>{
+    if(i===0){if(v.status==="Completed"&&!v.cancelled){firstComp++;firstCompIds.push(x.id);}}
+    else{revReq++;revReqIds.push(x.id);if(v.status==="Completed"&&!v.cancelled){revComp++;revCompIds.push(x.id);}else if(v.status!=="Completed"){revProc++;revProcIds.push(x.id);}}
+  });});
+  const totNoRev=firstComp,totWithRev=firstComp+revComp;
+  const svg=`<div class="flowchart"><svg viewBox="0 0 1180 760" width="100%" style="max-width:1080px;font-family:Inter,sans-serif">
     <defs><marker id="fnarr" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#B4C0CE"/></marker></defs>
-    ${fslabel(56,"Total leads")}${fslabel(146,"Qualified")}${fslabel(262,"DEV requirement")}${fslabel(382,"DEV (if required)")}${fslabel(512,"Design")}${fslabel(632,"Design output")}
-    <path d="M590,80 L590,110" stroke="#B4C0CE" stroke-width="2" fill="none" marker-end="url(#fnarr)"/>
-    ${fbus([{x:590,y:170}],[220,590,960],230,200)}
-    ${fbus([{x:220,y:302}],[112,289,466,643],350,326)}
-    ${fbus([{x:112,y:422},{x:590,y:302}],[420,615,810,1005],480,452)}
-    ${fbus([{x:1005,y:552}],[540,800],600,576)}
-    ${fbox(290,20,600,60,"var(--ink)",total,"unique leads",all.map(a=>a.id),"lead")}
-    <g class="fnode" onclick="funnelDrillSet(${fReg(qual.map(a=>a.id),"Qualified leads","lead")})"><rect x="290" y="110" width="600" height="60" rx="10" fill="#1D4FAB"/><text x="305" y="141" fill="#fff" font-size="23" font-weight="700" style="font-family:'Space Grotesk',sans-serif">${qual.length}</text><text x="305" y="158" fill="#fff" font-size="12" opacity=".95">${total?Math.round(qual.length/total*100):0}% of leads · ${dup.length} duplicate removed</text></g>
-    ${fbox(120,230,200,72,"var(--solar)",req.length,"DEV required",req.map(a=>a.id),"lead")}
-    ${fbox(490,230,200,72,"var(--teal)",notReq.length,"Not required",notReq.map(a=>a.id),"lead")}
-    ${fbox(860,230,200,72,"#94A3B8",notAsg.length,"Not assigned",notAsg.map(a=>a.id),"lead")}
-    ${fbox(30,350,165,72,"var(--green)",devDone.length,"DEV completed",devDone.map(a=>a.id),"dev")}
-    ${fbox(207,350,165,72,"var(--blue)",devProc.length,"In process",devProc.map(a=>a.id),"dev")}
-    ${fbox(384,350,165,72,"var(--amber)",devPend.length,"Pending",devPend.map(a=>a.id),"dev")}
-    ${fbox(561,350,165,72,"var(--red)",devCanc.length,"Cancelled",devCanc.map(a=>a.id),"dev")}
-    ${fbox(330,480,180,72,"#94A3B8",dCapNo.length,"Capacity not updated",dCapNo.map(a=>a.id),"design")}
-    ${fbox(525,480,180,72,"var(--red)",dNotAsg.length,"Not assigned",dNotAsg.map(a=>a.id),"design")}
-    ${fbox(720,480,180,72,"var(--amber)",dProc.length,"In process",dProc.map(a=>a.id),"design")}
-    ${fbox(915,480,180,72,"var(--green)",dDone.length,"Completed",dDone.map(a=>a.id),"design")}
-    ${fbox(430,600,220,64,"#0E9488",designCnt,"Designs completed",[...new Set(dCompIds)],"design")}
-    ${fbox(690,600,220,64,"#6E59C7",revCnt,"Revisions completed",[...new Set(rCompIds)],"design")}
+    ${fslabel(54,"Total leads")}${fslabel(134,"Qualified")}${fslabel(238,"DEV requirement")}${fslabel(348,"DEV (if required)")}${fslabel(468,"Design (first)")}${fslabel(580,"Design output")}${fslabel(700,"Total designs")}
+    <path d="M590,78 L590,100" stroke="#B4C0CE" stroke-width="2" fill="none" marker-end="url(#fnarr)"/>
+    ${fbus([{x:590,y:158}],[220,590,960],200,180)}
+    ${fbus([{x:220,y:266}],[112,289,466,643],310,290)}
+    ${fbus([{x:112,y:376},{x:590,y:266}],[300,495,690,885],430,408)}
+    ${fbus([{x:885,y:496}],[272,469,666,863],545,522)}
+    ${fbus([{x:272,y:605},{x:863,y:605}],[495,775],665,640)}
+    ${fbox(290,20,600,58,"var(--ink)",total,"unique leads",all.map(a=>a.id),"lead")}
+    <g class="fnode" onclick="funnelDrillSet(${fReg(qual.map(a=>a.id),"Qualified leads","lead")})"><rect x="290" y="100" width="600" height="58" rx="10" fill="#1D4FAB"/><text x="305" y="131" fill="#fff" font-size="22" font-weight="700" style="font-family:'Space Grotesk',sans-serif">${qual.length}</text><text x="305" y="149" fill="#fff" font-size="11.5" opacity=".95">${total?Math.round(qual.length/total*100):0}% of leads · ${dup.length} duplicate removed</text></g>
+    ${fbox(120,200,200,66,"var(--solar)",req.length,"DEV required",req.map(a=>a.id),"lead")}
+    ${fbox(490,200,200,66,"var(--teal)",notReq.length,"Not required",notReq.map(a=>a.id),"lead")}
+    ${fbox(860,200,200,66,"#94A3B8",notAsg.length,"Not assigned",notAsg.map(a=>a.id),"lead")}
+    ${fbox(30,310,165,66,"var(--green)",devDone.length,"DEV completed",devDone.map(a=>a.id),"dev")}
+    ${fbox(207,310,165,66,"var(--blue)",devProc.length,"In process",devProc.map(a=>a.id),"dev")}
+    ${fbox(384,310,165,66,"var(--amber)",devPend.length,"Pending",devPend.map(a=>a.id),"dev")}
+    ${fbox(561,310,165,66,"var(--red)",devCanc.length,"Cancelled",devCanc.map(a=>a.id),"dev")}
+    ${fbox(210,430,180,66,"#94A3B8",dCapNo.length,"Capacity not updated",dCapNo.map(a=>a.id),"design")}
+    ${fbox(405,430,180,66,"var(--red)",dNotAsg.length,"Not assigned",dNotAsg.map(a=>a.id),"design")}
+    ${fbox(600,430,180,66,"var(--amber)",dProc.length,"First design in process",dProc.map(a=>a.id),"design")}
+    ${fbox(795,430,180,66,"var(--green)",dDone.length,"First design completed",dDone.map(a=>a.id),"design")}
+    ${fbox(180,545,185,60,"#0E9488",firstComp,"Designs completed",firstCompIds,"design")}
+    ${fbox(377,545,185,60,"#B45309",revReq,"Revisions requested",revReqIds,"design")}
+    ${fbox(574,545,185,60,"var(--amber)",revProc,"Revisions in process",revProcIds,"design")}
+    ${fbox(771,545,185,60,"#6E59C7",revComp,"Revisions completed",revCompIds,"design")}
+    ${fbox(380,665,230,60,"var(--ink)",totNoRev,"Total designs (no revision)",firstCompIds,"design")}
+    ${fbox(660,665,230,60,"#15633F",totWithRev,"Total designs (with revision)",[...firstCompIds,...revCompIds],"design")}
   </svg></div>`;
   $("#funnel").innerHTML=svg;
 }
